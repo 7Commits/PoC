@@ -1,31 +1,55 @@
 import streamlit as st
-from utils import carica_domande_da_json, simula_risposta
+import json
+from utils import *
+from domande import *
 
 st.set_page_config(page_title="Artificial QI - PoC", layout="wide")
 st.title("Artificial QI - Proof of Concept")
  
+domande = carica_domande()
+
 col1, col2 = st.columns([1, 2])
 
 # Sezione "Gestione domande"
 with col1:
-    st.header("Gestione domande")
+    st.header("📁 Gestione domande")
     
+    # Caricamento da file JSON (UC1.2)
     uploaded_file = st.file_uploader("📄 Carica file domande")
     
-    domande = []
     if uploaded_file:
-        domande = carica_domande_da_json(uploaded_file)
-        st.success("✅ File caricato con successo")
-    
-    st.markdown("---")
-    
-    if domande:
-        with st.expander("📋 Visualizza domande caricate"):
-            for i, d in enumerate(domande, 1):
-                st.markdown(f"**{i}.** {d['domanda']}")
-    else:
-        st.info("Nessuna domanda caricata")
+        try:
+            domande_caricate = json.load(uploaded_file)
+            st.success("✅ File caricato con successo")
+            if st.button("📥 Importa nel database locale"):
+                domande_correnti = carica_domande()
+                domande_correnti.extend(domande_caricate)
+                salva_domande(domande_correnti)
+                st.success("Domande importate correttamente.")
+        except Exception as e:
+            st.error(f"❌ Errore nel file: {e}")
 
+    # Inserimento manuale (UC1.1)
+    st.markdown("---")
+    st.subheader("Inserisci manualmente una domanda")
+
+    with st.form("inserimento_domanda"):
+        nuova_domanda = st.text_input("Domanda")
+        nuova_risposta = st.text_area("Risposta attesa")
+        categoria = st.text_input("Categoria (es. Python, Algoritmi, Capitali ecc.)")
+
+        invia = st.form_submit_button("✅ Aggiungi")
+        
+        if invia and nuova_domanda.strip() and nuova_risposta.strip() and categoria.strip():
+            aggiungi_domanda(
+                nuova_domanda.strip(),
+                nuova_risposta.strip(),
+                categoria.strip()
+            )
+            st.success("Domanda aggiunta con successo.")
+            st.rerun()
+
+st.empty()
 
 # Sezione "User input"
 with col2:
@@ -55,6 +79,8 @@ with col2:
         risposta = simula_risposta(prompt)
         st.session_state.messages.append({"role": "ai", "content": risposta})
         st.rerun()
+   
+    st.markdown("---")
    
     st.subheader("📊 Risultato")
     
