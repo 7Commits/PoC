@@ -1,0 +1,7 @@
+streamlit
+pandas
+plotly
+openai
+
+
+#installa con pip install -r requirements.txt

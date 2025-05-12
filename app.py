@@ -53,7 +53,7 @@ if 'max_tokens' not in st.session_state:
     st.session_state.max_tokens = 1000
 
 # Applicazione principale
-st.title("🧠 LLM Test Evaluation Platform")
+st.title("🧠 LLM Test Evaluation Platform - Artificial QI")
 
 # Importa utilità UI
 from utils.ui_utils import add_global_styles, add_page_header
@@ -293,8 +293,8 @@ pages = {
     "Gestione Domande": "pages/gestione_domande.py",
     "Gestione Set di Domande": "pages/gestione_set.py",
     "Configurazione API": "pages/api_configurazione.py",
-    "Esecuzione Test": "pages/esecuizone_test.py",
-    "Visualizzazione Risultati": "pages/visualizza risultati.py"
+    "Esecuzione Test": "pages/esecuzione_test.py",
+    "Visualizzazione Risultati": "pages/visualizza_risultati.py"
 }
 
 # Home è gestita in questo file, le altre sono in file separati
