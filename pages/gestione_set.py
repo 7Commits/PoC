@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from utils.data_utils import (
     load_questions, load_question_sets, save_question_sets,
-    create_question_set, update_question_set, delete_question_set
+    create_question_set, update_question_set, delete_question_set, import_questions_from_file
 )
 from utils.ui_utils import add_page_header, add_section_title, create_card, create_metrics_container
 
@@ -34,7 +34,7 @@ add_page_header(
 )
 
 # Schede per diverse funzioni di gestione dei set
-tabs = st.tabs(["Visualizza & Modifica Set", "Crea Nuovo Set"])
+tabs = st.tabs(["Visualizza & Modifica Set", "Crea Nuovo Set", "Importa Set da file"])
 
 
 # Funzione per ottenere il testo della domanda tramite ID
@@ -235,3 +235,66 @@ with tabs[1]:
             else:
                 st.error("Il nome del set è obbligatorio.")
 
+# Scheda Importa da File
+with tabs[2]:
+    st.header("Importa Set da File")
+
+    st.write("""
+    Carica un file CSV o JSON contenente un set di domande e risposte attese. Un set contiene tutte domande appartenenti alla stessa Categoria.
+
+    ### Formato File:
+    - **CSV**: Deve includere le colonne 'domanda' e 'risposta_attesa'. Può includere opzionalmente 'categoria'.
+      (Se usi i vecchi nomi 'question' e 'expected_answer', verranno convertiti automaticamente).
+    - **JSON**: Deve contenere un array di oggetti con i campi 'domanda' e 'risposta_attesa'. Può includere opzionalmente 'categoria'.
+      (Se usi i vecchi nomi 'question' e 'expected_answer', verranno convertiti automaticamente).
+
+    ### Esempio CSV:
+    ```csv
+    domanda,risposta_attesa,categoria
+    "Quanto fa 2+2?","4","Matematica Base"
+    "Quanto fa 10*4","40","Matematica Base"
+    "Qual è il valore approssimato del pi greco?","3.141592653589793","Matematica Base"
+    ```
+
+    ### Esempio JSON, (Set di domande Capitali):
+    ```json
+    [
+        {
+            "id": 1,
+            "domanda": "Qual è la capitale della Francia?",
+            "risposta_attesa": "Parigi",
+            "categoria": "Capitali"
+        },
+        {
+            "id": 2,
+            "domanda": "Qual è la capitale della Germania?",
+            "risposta_attesa": "Berlino",
+            "categoria": "Capitali"
+        },
+        {
+            "id": 3,
+            "domanda": "Qual è la capitale dell'Italia?",
+            "risposta_attesa": "Roma",
+            "categoria": "Capitali"
+        },
+        {
+            "id": 4,
+            "domanda": "Qual è la capitale della Spagna?",
+            "risposta_attesa": "Madrid",
+            "categoria": "Capitali"
+        }
+    ]
+    ```
+    """)
+
+    uploaded_file = st.file_uploader("Scegli un file", type=["csv", "json"])
+
+    if uploaded_file is not None:
+        if st.button("Importa Domande"):
+            success, message = import_questions_from_file(uploaded_file)
+
+            if success:
+                st.success(message)
+                st.rerun()
+            else:
+                st.error(message)

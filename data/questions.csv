@@ -1,2 +1,22 @@
-id,question,expected_answer
-80c09be9-d1a6-4051-a7a4-8cad3b5d1028,test,你好
+id,domanda,risposta_attesa,categoria
+80c09be9-d1a6-4051-a7a4-8cad3b5d1028,test,你好,   
+ca32fb29-9d54-4980-8713-1039ac9a25d6,Qual è la capitale della Francia?,Parigi,Capitali
+a13cd5d5-6ccf-4857-9d64-7fdd984ec1f2,Qual è la capitale della Germania?,Berlino,Capitali
+982692bd-d03b-4a07-8e11-a93695ede8d3,Qual è la capitale dell'Italia?,Roma,Capitali
+46c39b67-d808-40fa-9db4-4da8bfede658,Qual è la capitale della Spagna?,Madrid,Capitali
+17771ee3-47c9-4483-96a5-56a7193ceec6,Qual è la capitale del Regno Unito?,Londra,Capitali
+4628ade4-6f26-480e-b55e-c8426eb4fca7,Qual è la capitale della Grecia?,Atene,Capitali
+5bbbea35-6900-41f6-b2d3-e238818dc336,Qual è la capitale della Svezia?,Stoccolma,Capitali
+6ef8216e-1ed9-48f0-99dd-fda6f2d1ac7f,Qual è la capitale della Norvegia?,Oslo,Capitali
+e90a013e-3dd1-43d8-9405-0e6195fe5c31,Qual è la capitale dei Paesi Bassi?,Amsterdam,Capitali
+e057fbb6-af34-4910-b68b-4f3df21d0bf3,Qual è la capitale della Danimarca?,Copenaghen,Capitali
+9b896b7a-501d-4ae5-86c3-a96c7d15de32,Qual è la capitale della Polonia?,Varsavia,Capitali
+b74c1a62-8968-4858-8ede-5693f3c256a7,Qual è la capitale della Belgio?,Bruxelles,Capitali
+1df2be1f-34ee-431c-96a3-ba2e6a5b4c84,Qual è la capitale della Svizzera?,Berna,Capitali
+2de00a04-be02-47aa-962e-25ca6838e79d,Qual è la capitale dell'Austria?,Vienna,Capitali
+908dd6ec-0621-459b-971b-b9eff7757f80,Qual è la capitale della Finlandia?,Helsinki,Capitali
+8e84d43a-3f5e-46c1-b47c-eca3910d757f,Qual è la capitale della Repubblica Ceca?,Praga,Capitali
+11aba30e-3a72-425b-b266-67052196b3f3,Qual è la capitale del Portogallo?,Lisboa,Capitali
+f76e53c1-1ed1-4824-bbee-78a8fc0eadcb,Qual è la capitale della Romania?,Bucarest,Capitali
+0be9b10a-9866-47aa-952b-5f2206d4c1be,Qual è la capitale dell'Ungheria?,Budapest,Capitali
+88217f84-9fef-41b3-8b86-f4bac057a401,Qual è la capitale della Bulgaria?,Sofia,Capitali

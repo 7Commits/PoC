@@ -2,6 +2,7 @@ streamlit
 pandas
 plotly
 openai
+uuid
 
 
 #installa con pip install -r requirements.txt
