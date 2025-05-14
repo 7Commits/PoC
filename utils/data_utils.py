@@ -285,14 +285,44 @@ def update_question_set(set_id, name=None, question_ids=None):
 
 
 def delete_question_set(set_id):
-    """Elimina un set di domande."""
+    # Elimina un set di domande
     sets_df = st.session_state.question_sets.copy()
+    questions_df = st.session_state.questions.copy()
+    
+    # Trova il set da eliminare
+    set_to_delete = sets_df[sets_df['id'] == str(set_id)]
+    if set_to_delete.empty:
+        return
+
+    # Ottieni gli ID delle domande nel set da eliminare
+    question_ids_in_set = set_to_delete.iloc[0].get('questions', [])
+    if not isinstance(question_ids_in_set, list):
+        question_ids_in_set = []
+
+    # Trova le domande usate in altri set
+    other_sets_df = sets_df[sets_df['id'] != str(set_id)]
+    question_ids_used_elsewhere = set()
+    for qlist in other_sets_df['questions']:
+        if isinstance(qlist, list):
+            question_ids_used_elsewhere.update(qlist)
+
+    # Domande che possono essere eliminate perché usate solo in questo set
+    question_ids_to_delete = [
+        qid for qid in question_ids_in_set if qid not in question_ids_used_elsewhere
+    ]
+
+    # Elimina le domande dal df
+    questions_df = questions_df[~questions_df['id'].isin(question_ids_to_delete)]
+    save_questions(questions_df)
+
+    # Elimina il set dal df
     sets_df = sets_df[sets_df['id'] != str(set_id)]
     save_question_sets(sets_df)
+    st.session_state.question_sets = sets_df
 
 
 def add_test_result(set_id, results_data):
-    """Aggiunge un nuovo risultato del test."""
+    # Aggiunge un nuovo risultato del test.
     results_df = st.session_state.results.copy()
 
     new_result_data = {
@@ -310,7 +340,7 @@ def add_test_result(set_id, results_data):
 
 
 def import_questions_from_file(file):
-    """Importa domande da un file CSV o JSON."""
+    """Importa domande da un file CSV o JSON e crea un set automaticamente se tutte le domande condividono la stessa categoria."""
     try:
         file_extension = os.path.splitext(file.name)[1].lower()
         imported_df = None
@@ -362,9 +392,15 @@ def import_questions_from_file(file):
 
         questions_df = st.session_state.questions.copy()
         questions_df = pd.concat([questions_df, final_imported_df], ignore_index=True)
-
         save_questions(questions_df)
 
+        # Se tutte le domande hanno la stessa categoria, crea un set
+        categorie_uniche = final_imported_df['categoria'].dropna().unique()
+        if len(categorie_uniche) == 1 and categorie_uniche[0].strip():
+            nome_set = categorie_uniche[0].strip()
+            domande_ids = final_imported_df['id'].tolist()
+            create_question_set(nome_set, domande_ids)
+        
         return True, f"Importate con successo {len(final_imported_df)} domande."
 
     except Exception as e:
