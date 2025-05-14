@@ -5,16 +5,21 @@ Questa repository contiene il **Proof of Concept** per la fase di **Requirements
 ```
 PoC/
 ├── app.py # Main application script
-├── requirements.txt # List of dependencies
-├── pages/ # Contains page-specific scripts
-│ ├── gestione_domande.py # Manages questions
-│ ├── gestione_set.py # Manages question sets
-│ └── ... # Other pages
+├── requirements.txt # Lista dipendenze
+├── pages/ # Page-specific scripts
+│ ├── api_configurazione.py # Configurazione API
+│ ├── esecuzione_test.py # Esecuzione test su domande
+│ ├── gestione_domande.py # Gestione domande
+│ ├── visualizza_risultati.py # Visualizzazione risultati test
+│ └── gestione_set.py # Gestione set di domande
 ├── utils/ # Utility scripts
-│ ├── data_utils.py # Data handling utilities
-│ └── ui_utils.py # UI utilities
+│ ├── api_utils.py # Gestione Api utils
+│ ├── data_utils.py # Gestione dati utils
+│ ├── openai_utils.py # Gestione utils openai
+│ └── ui_utils.py # UI utils
 ├── data/ # Data files (CSV)
-│ ├── questions.csv # Questions data
-│ ├── question_sets.csv # Question sets data
-│ └── test_results.csv # Test results data
+│ ├── questions.csv # Dati domande
+│ ├── question_sets.csv # Dati set domande
+│ ├──test_results.csv # Dati risultati test
+│ └── ... #Altri file (Set domande json ecc)
 ```
