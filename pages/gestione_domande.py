@@ -33,45 +33,77 @@ with tabs[0]:
         # Assicurati che la colonna 'categoria' esista, altrimenti aggiungila con valori vuoti
         if 'categoria' not in questions_df.columns:
             questions_df['categoria'] = ""
+        else:
+            # Riempi i valori NaN o None nella colonna 'categoria' con una stringa vuota o 'N/A'
+            # per assicurare che il filtro funzioni correttamente e per la visualizzazione.
+            questions_df['categoria'] = questions_df['categoria'].fillna('N/A')
 
-        for idx, row in questions_df.iterrows():
-            with st.expander(f"Domanda: {row['domanda'][:100]}... (Categoria: {row.get('categoria', 'N/A')})"):
-                col1, col2 = st.columns([3, 1])
+        # Ottieni le categorie uniche per il filtro, includendo un'opzione per mostrare tutto
+        # Converti esplicitamente in stringa per evitare problemi con tipi misti e aggiungi 'Tutte le categorie'
+        unique_categories = sorted(list(questions_df['categoria'].astype(str).unique()))
+        unique_categories.insert(0, "Tutte le categorie")
 
-                with col1:
-                    edited_question = st.text_area(
-                        f"Modifica Domanda {idx + 1}",
-                        value=row['domanda'],
-                        key=f"q_edit_{row['id']}"
-                    )
+        # Crea il selettore per la categoria
+        selected_category = st.selectbox(
+            "Filtra per categoria:",
+            options=unique_categories,
+            index=0  # Imposta "Tutte le categorie" come predefinito
+        )
 
-                    edited_answer = st.text_area(
-                        f"Modifica Risposta Attesa {idx + 1}",
-                        value=row['risposta_attesa'],
-                        key=f"a_edit_{row['id']}"
-                    )
+        # Filtra il DataFrame in base alla categoria selezionata
+        if selected_category == "Tutte le categorie":
+            filtered_questions_df = questions_df
+        else:
+            filtered_questions_df = questions_df[questions_df['categoria'] == selected_category]
 
-                    edited_category = st.text_input(
-                        f"Modifica Categoria {idx + 1}",
-                        value=row.get('categoria', ''),  # Usa .get per sicurezza se la colonna non fosse presente
-                        key=f"c_edit_{row['id']}"
-                    )
+        if not filtered_questions_df.empty:
+            for idx, row in filtered_questions_df.iterrows():
+                # Usa .get('categoria', 'N/A') per una gestione sicura se 'categoria' non fosse presente o fosse NaN dopo il filtro
+                # Anche se abbiamo gestito i NaN prima, è una buona pratica per la robustezza.
+                category_display = row.get('categoria', 'N/A') if pd.notna(row.get('categoria')) else 'N/A'
+                with st.expander(f"Domanda: {row['domanda'][:100]}... (Categoria: {category_display})"):
+                    col1, col2 = st.columns([3, 1])
 
-                with col2:
-                    # Pulsante Aggiorna
-                    if st.button("Salva Modifiche", key=f"save_{row['id']}"):
-                        if update_question(row['id'], testo_domanda=edited_question, risposta_prevista=edited_answer,
-                                           categoria=edited_category):
-                            st.success("Domanda aggiornata con successo!")
+                    with col1:
+                        edited_question = st.text_area(
+                            f"Modifica Domanda {idx + 1}",
+                            value=row['domanda'],
+                            key=f"q_edit_{row['id']}"
+                        )
+
+                        edited_answer = st.text_area(
+                            f"Modifica Risposta Attesa {idx + 1}",
+                            value=row['risposta_attesa'],
+                            key=f"a_edit_{row['id']}"
+                        )
+
+                        edited_category_value = row.get('categoria', '')
+                        edited_category = st.text_input(
+                            f"Modifica Categoria {idx + 1}",
+                            value=edited_category_value,
+                            key=f"c_edit_{row['id']}"
+                        )
+
+                    with col2:
+                        # Pulsante Aggiorna
+                        if st.button("Salva Modifiche", key=f"save_{row['id']}"):
+                            if update_question(row['id'], testo_domanda=edited_question, risposta_prevista=edited_answer,
+                                               categoria=edited_category):
+                                st.success("Domanda aggiornata con successo!")
+                                # Aggiorna st.session_state.questions per riflettere la modifica della categoria nel filtro
+                                st.session_state.questions.loc[st.session_state.questions['id'] == row['id'], 'categoria'] = edited_category
+                                st.rerun()
+                            else:
+                                st.error("Impossibile aggiornare la domanda.")
+
+                        # Pulsante Elimina
+                        if st.button("Elimina Domanda", key=f"delete_{row['id']}"):
+                            delete_question(row['id'])
+                            st.success("Domanda eliminata con successo!")
                             st.rerun()
-                        else:
-                            st.error("Impossibile aggiornare la domanda.")
+        else:
+            st.info(f"Nessuna domanda trovata per la categoria '{selected_category}'.")
 
-                    # Pulsante Elimina
-                    if st.button("Elimina Domanda", key=f"delete_{row['id']}"):
-                        delete_question(row['id'])
-                        st.success("Domanda eliminata con successo!")
-                        st.rerun()
     else:
         st.info("Nessuna domanda disponibile. Aggiungi domande utilizzando la scheda 'Aggiungi Domande'.")
 
@@ -149,3 +181,4 @@ with tabs[2]:
                 st.rerun()
             else:
                 st.error(message)
+
