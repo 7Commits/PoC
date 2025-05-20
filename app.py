@@ -61,9 +61,77 @@ from utils.ui_utils import add_global_styles, add_page_header
 # Aggiungi CSS personalizzato e stili globali
 add_global_styles()
 
+# CSS Estremo per Visibilità Input in Tema Scuro
 st.markdown("""
 <style>
-    /* Stile migliorato per il box delle funzionalità */
+    /* TEMA SCURO: Input con sfondo CHIARO e testo NERO */
+    [data-theme="dark"] div[data-testid="stTextInput"] input,
+    .streamlit-dark div[data-testid="stTextInput"] input,
+    [data-theme="dark"] div[data-baseweb="input"] input,
+    .streamlit-dark div[data-baseweb="input"] input,
+    [data-theme="dark"] div[data-testid="stTextArea"] textarea,
+    .streamlit-dark div[data-testid="stTextArea"] textarea,
+    [data-theme="dark"] div[data-baseweb="textarea"] textarea,
+    .streamlit-dark div[data-baseweb="textarea"] textarea,
+    [data-theme="dark"] div[data-testid="stNumberInput"] input,
+    .streamlit-dark div[data-testid="stNumberInput"] input {
+        color: #000000 !important; /* Testo NERO */
+        background-color: #FFFFFF !important; /* Sfondo BIANCO */
+        border: 1px solid #AAAAAA !important; /* Bordo grigio chiaro */
+    }
+
+    /* TEMA SCURO: Select box con testo NERO su sfondo BIANCO */
+    /* Nota: lo stile dei select è più complesso da sovrascrivere completamente */
+    [data-theme="dark"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    .streamlit-dark div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #AAAAAA !important;
+    }
+    [data-theme="dark"] div[data-testid="stSelectbox"] svg,
+    .streamlit-dark div[data-testid="stSelectbox"] svg {
+        fill: #000000 !important; /* Icona freccia nera */
+    }
+
+    /* TEMA CHIARO: Input con sfondo BIANCO e testo NERO (standard) */
+    [data-theme="light"] div[data-testid="stTextInput"] input,
+    .streamlit-light div[data-testid="stTextInput"] input,
+    [data-theme="light"] div[data-baseweb="input"] input,
+    .streamlit-light div[data-baseweb="input"] input,
+    [data-theme="light"] div[data-testid="stTextArea"] textarea,
+    .streamlit-light div[data-testid="stTextArea"] textarea,
+    [data-theme="light"] div[data-baseweb="textarea"] textarea,
+    .streamlit-light div[data-baseweb="textarea"] textarea,
+    [data-theme="light"] div[data-testid="stNumberInput"] input,
+    .streamlit-light div[data-testid="stNumberInput"] input {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #E0E0E0 !important;
+    }
+
+    [data-theme="light"] div[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+    .streamlit-light div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #E0E0E0 !important;
+    }
+    [data-theme="light"] div[data-testid="stSelectbox"] svg,
+    .streamlit-light div[data-testid="stSelectbox"] svg {
+        fill: #000000 !important;
+    }
+
+    /* Stili generali per tutti i componenti input (bordi, padding) */
+    div[data-testid="stTextInput"] input,
+    div[data-baseweb="input"] input,
+    div[data-testid="stTextArea"] textarea,
+    div[data-baseweb="textarea"] textarea,
+    div[data-testid="stNumberInput"] input,
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        border-radius: 4px !important;
+        padding: 8px !important;
+    }
+
+    /* Stili per i box delle funzionalità (mantenuti dal codice originale) */
     .feature-box {
         background-color: white;
         border-radius: 12px;
@@ -73,12 +141,10 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(79, 106, 240, 0.1);
         transition: all 0.3s ease;
     }
-    
     .feature-box:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(79, 106, 240, 0.15);
     }
-    
     .feature-title {
         font-size: 1.3rem;
         font-weight: 600;
@@ -87,13 +153,11 @@ st.markdown("""
         display: flex;
         align-items: center;
     }
-    
     .feature-description {
         font-size: 1rem;
         color: #555;
         line-height: 1.5;
     }
-    
     .icon-large {
         font-size: 2rem;
         margin-right: 0.75rem;
@@ -105,7 +169,6 @@ st.markdown("""
         border-radius: 50%;
         box-shadow: 0 4px 10px rgba(79, 106, 240, 0.1);
     }
-    
     .welcome-section {
         margin-bottom: 2.5rem;
         background-color: white;
@@ -114,22 +177,18 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border-left: 5px solid #4F6AF0;
     }
-    
     .welcome-title {
         font-size: 2.2rem;
         font-weight: bold;
         color: #4F6AF0;
         margin-bottom: 1rem;
     }
-    
     .subtitle {
         font-size: 1.3rem;
         color: #555;
         line-height: 1.6;
         margin-bottom: 1.5rem;
     }
-    
-    /* Sezione per iniziare */
     .getting-started {
         background: white;
         padding: 2rem;
@@ -139,16 +198,13 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(0,0,0,0.05);
         border-left: 5px solid #4F6AF0;
     }
-    
     .getting-started h3 {
         color: #4F6AF0;
         margin-bottom: 1rem;
     }
-    
     .getting-started ol {
         padding-left: 1.5rem;
     }
-    
     .getting-started li {
         margin-bottom: 0.75rem;
         line-height: 1.6;
@@ -160,7 +216,7 @@ st.markdown("""
 st.markdown("""
 <div class="welcome-section">
     <h1 class="welcome-title">🧠 Piattaforma di Valutazione LLM</h1>
-    <p class="subtitle">Una piattaforma completa per valutare le risposte LLM con diversi provider AI tra cui OpenAI, Anthropic e X.AI</p>
+    <p class="subtitle">Una piattaforma completa per valutare le risposte LLM con diversi provider AI e l'algoritmo Best Matching 25 (BM25) per il confronto di testi</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -201,7 +257,7 @@ with col2:
         </p>
         <p class="feature-description">
             Esegui test con punteggio automatico rispetto alle risposte previste.
-            Visualizza analisi dettagliate con metriche di somiglianza, correttezza e completezza.
+            Utilizza l'algoritmo BM25 per valutare la somiglianza semantica tra testi.
         </p>
     </div>
     
@@ -212,7 +268,7 @@ with col2:
         </p>
         <p class="feature-description">
             Visualizza i risultati dei test con grafici interattivi e metriche dettagliate.
-            Accedi alle informazioni complete delle richieste e risposte API per debug e ottimizzazione.
+            Analizza parole chiave mancanti e ottieni suggerimenti di miglioramento specifici.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -224,7 +280,7 @@ st.markdown("""
         <li>Configura le tue credenziali API nella pagina <strong>Configurazione API</strong></li>
         <li>Crea domande e risposte previste nella pagina <strong>Gestione Domande</strong></li>
         <li>Organizza le domande in set nella pagina <strong>Gestione Set di Domande</strong></li>
-        <li>Esegui valutazioni nella pagina <strong>Esecuzione Test</strong></li>
+        <li>Esegui valutazioni nella pagina <strong>Esecuzione Test</strong> o utilizza <strong>Valutazione BM25</strong> per un'analisi basata sui termini</li>
         <li>Visualizza e analizza i risultati nella pagina <strong>Visualizzazione Risultati</strong></li>
     </ol>
     <p>Utilizza la barra laterale a sinistra per navigare tra queste funzionalità.</p>
@@ -287,6 +343,8 @@ st.sidebar.markdown("""
 <div class="sidebar-subtitle">📚 Funzioni Principali</div>
 """, unsafe_allow_html=True)
 
+
+
 # Opzioni di navigazione
 pages = {
     "Home": "Home",
@@ -294,6 +352,7 @@ pages = {
     "Gestione Set di Domande": "pages/gestione_set.py",
     "Configurazione API": "pages/api_configurazione.py",
     "Esecuzione Test": "pages/esecuzione_test.py",
+    "Valutazione BM25": "pages/valutazione_bm25.py",
     "Visualizzazione Risultati": "pages/visualizza_risultati.py"
 }
 

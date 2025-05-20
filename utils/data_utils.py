@@ -20,9 +20,9 @@ def initialize_data():
     if not QUESTIONS_FILE.exists():
         questions_df = pd.DataFrame({
             'id': pd.Series(dtype='str'),
-            'domanda': pd.Series(dtype='str'),
-            'risposta_attesa': pd.Series(dtype='str'),
-            'categoria': pd.Series(dtype='str')
+            'question': pd.Series(dtype='str'),
+            'expected_answer': pd.Series(dtype='str'),
+            'category': pd.Series(dtype='str')
         })
         questions_df.to_csv(QUESTIONS_FILE, index=False)
 
@@ -258,6 +258,10 @@ def delete_question_set(set_id):
     save_question_sets(sets_df)
 
 def add_test_result(set_id, results_data):
+    # 检查session_state.results是否存在，如果不存在则加载
+    if 'results' not in st.session_state:
+        st.session_state.results = load_results()
+    
     results_df = st.session_state.results.copy()
     new_result_data = {'id': str(uuid.uuid4()), 'set_id': str(set_id), 'timestamp': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S'), 'results': results_data if isinstance(results_data, dict) else {}}
     new_result_df = pd.DataFrame([new_result_data])
