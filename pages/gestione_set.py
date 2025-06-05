@@ -12,6 +12,89 @@ from utils.data_utils import (
 )
 from utils.ui_utils import add_page_header, add_section_title, create_card, create_metrics_container
 
+# === CALLBACK FUNCTIONS ===
+
+def save_set_callback(set_id, edited_name, question_options_checkboxes, newly_selected_questions_ids):
+    """回调函数：保存集合修改"""
+    kept_questions_ids = [q_id for q_id, keep in question_options_checkboxes.items() if keep]
+    updated_questions_ids = list(
+        set(kept_questions_ids + [str(q_id) for q_id in newly_selected_questions_ids])
+    )
+
+    if update_question_set(set_id, edited_name, updated_questions_ids):
+        st.session_state.save_set_success_message = "Set di domande aggiornato con successo!"
+        st.session_state.save_set_success = True
+        st.session_state.trigger_rerun = True
+    else:
+        st.session_state.save_set_error_message = "Impossibile aggiornare il set di domande."
+        st.session_state.save_set_error = True
+
+def delete_set_callback(set_id):
+    """回调函数：删除集合"""
+    delete_question_set(set_id)
+    st.session_state.delete_set_success_message = "Set di domande eliminato con successo!"
+    st.session_state.delete_set_success = True
+    st.session_state.trigger_rerun = True
+
+def import_set_callback():
+    """回调函数：导入集合"""
+    if 'uploaded_file_content_set' in st.session_state and st.session_state.uploaded_file_content_set is not None:
+        success, message = import_questions_from_file(st.session_state.uploaded_file_content_set)
+        
+        if success:
+            st.session_state.import_set_success_message = message
+            st.session_state.import_set_success = True
+            st.session_state.trigger_rerun = True
+        else:
+            st.session_state.import_set_error_message = message
+            st.session_state.import_set_error = True
+
+# === 初始化状态变量 ===
+if 'save_set_success' not in st.session_state:
+    st.session_state.save_set_success = False
+if 'save_set_error' not in st.session_state:
+    st.session_state.save_set_error = False
+if 'delete_set_success' not in st.session_state:
+    st.session_state.delete_set_success = False
+if 'import_set_success' not in st.session_state:
+    st.session_state.import_set_success = False
+if 'import_set_error' not in st.session_state:
+    st.session_state.import_set_error = False
+if 'trigger_rerun' not in st.session_state:
+    st.session_state.trigger_rerun = False
+
+# 存储每行的选择状态
+if 'question_checkboxes' not in st.session_state:
+    st.session_state.question_checkboxes = {}
+if 'newly_selected_questions' not in st.session_state:
+    st.session_state.newly_selected_questions = {}
+
+# 处理rerun逻辑
+if st.session_state.trigger_rerun:
+    st.session_state.trigger_rerun = False
+    st.rerun()
+
+# 显示状态消息
+if st.session_state.save_set_success:
+    st.success(st.session_state.get('save_set_success_message', 'Set aggiornato con successo!'))
+    st.session_state.save_set_success = False
+
+if st.session_state.save_set_error:
+    st.error(st.session_state.get('save_set_error_message', 'Errore durante l\'aggiornamento del set.'))
+    st.session_state.save_set_error = False
+
+if st.session_state.delete_set_success:
+    st.success(st.session_state.get('delete_set_success_message', 'Set eliminato con successo!'))
+    st.session_state.delete_set_success = False
+
+if st.session_state.import_set_success:
+    st.success(st.session_state.get('import_set_success_message', 'Importazione completata con successo!'))
+    st.session_state.import_set_success = False
+
+if st.session_state.import_set_error:
+    st.error(st.session_state.get('import_set_error_message', 'Errore durante l\'importazione.'))
+    st.session_state.import_set_error = False
+
 # Inizializza le variabili di stato della sessione se non esistono
 if 'questions' not in st.session_state or st.session_state.questions.empty:
     st.session_state.questions = load_questions()
@@ -59,6 +142,26 @@ def get_question_category(question_id, questions_df):
             return question_row.iloc[0]['categoria']
     return 'N/A'  # Ritorna 'N/A' se non trovata o colonna mancante
 
+
+# 创建回调函数的包装器
+def create_save_set_callback(set_id):
+    """创建保存集合的回调函数"""
+    def callback():
+        # 获取当前状态
+        edited_name = st.session_state.get(f"set_name_{set_id}", "")
+        question_options_checkboxes = st.session_state.question_checkboxes.get(set_id, {})
+        newly_selected_questions_ids = st.session_state.newly_selected_questions.get(set_id, [])
+        
+        save_set_callback(set_id, edited_name, question_options_checkboxes, newly_selected_questions_ids)
+    
+    return callback
+
+def create_delete_set_callback(set_id):
+    """创建删除集合的回调函数"""
+    def callback():
+        delete_set_callback(set_id)
+    
+    return callback
 
 # Scheda Visualizza e Modifica Set
 with tabs[0]:
@@ -137,22 +240,32 @@ with tabs[0]:
                     if not isinstance(current_question_ids_in_set, list):
                         current_question_ids_in_set = []
 
-                    question_options_checkboxes = {}
+                    # 初始化这个集合的复选框状态
+                    if row['id'] not in st.session_state.question_checkboxes:
+                        st.session_state.question_checkboxes[row['id']] = {}
+
                     if current_question_ids_in_set:
                         for q_id in current_question_ids_in_set:
                             q_text = get_question_text(str(q_id))
                             q_cat = get_question_category(str(q_id), questions_df) if questions_ready else 'N/A'
                             display_text = f"{q_text} (Categoria: {q_cat})"
-                            question_options_checkboxes[str(q_id)] = st.checkbox(
+                            
+                            # 使用回调来更新checkbox状态
+                            checkbox_value = st.checkbox(
                                 display_text,
                                 value=True,
                                 key=f"qcheck_{row['id']}_{q_id}"
                             )
+                            st.session_state.question_checkboxes[row['id']][str(q_id)] = checkbox_value
                     else:
                         st.info("Nessuna domanda in questo set.")
 
                     st.subheader("Aggiungi Domande al Set")
-                    newly_selected_questions_ids = []
+                    
+                    # 初始化新选择的问题状态
+                    if row['id'] not in st.session_state.newly_selected_questions:
+                        st.session_state.newly_selected_questions[row['id']] = []
+
                     if questions_ready:
                         all_questions_df = st.session_state.questions
                         available_questions_df = all_questions_df[
@@ -171,27 +284,26 @@ with tabs[0]:
                                 format_func=lambda x: question_dict_for_multiselect.get(x, x),
                                 key=f"add_q_{row['id']}"
                             )
+                            st.session_state.newly_selected_questions[row['id']] = newly_selected_questions_ids
                         else:
                             st.info("Nessuna altra domanda disponibile da aggiungere.")
                     else:
                         st.info("Le domande non sono disponibili per la selezione (dati mancanti o incompleti).")
 
                 with col2:
-                    if st.button("Salva Modifiche", key=f"save_set_{row['id']}"):
-                        kept_questions_ids = [q_id for q_id, keep in question_options_checkboxes.items() if keep]
-                        updated_questions_ids = list(
-                            set(kept_questions_ids + [str(q_id) for q_id in newly_selected_questions_ids]))
+                    # 使用回调函数的保存按钮
+                    st.button(
+                        "Salva Modifiche", 
+                        key=f"save_set_{row['id']}",
+                        on_click=create_save_set_callback(row['id'])
+                    )
 
-                        if update_question_set(row['id'], edited_name, updated_questions_ids):
-                            st.success("Set di domande aggiornato con successo!")
-                            st.rerun()
-                        else:
-                            st.error("Impossibile aggiornare il set di domande.")
-
-                    if st.button("Elimina Set", key=f"delete_set_{row['id']}"):
-                        delete_question_set(row['id'])
-                        st.success("Set di domande eliminato con successo!")
-                        st.rerun()
+                    # 使用回调函数的删除按钮
+                    st.button(
+                        "Elimina Set", 
+                        key=f"delete_set_{row['id']}",
+                        on_click=create_delete_set_callback(row['id'])
+                    )
 
     elif not sets_ready or (st.session_state.question_sets.empty and not selected_categories):
         st.info("Nessun set di domande disponibile. Crea un nuovo set utilizzando la scheda 'Crea Nuovo Set'.")
@@ -290,11 +402,12 @@ with tabs[2]:
     uploaded_file = st.file_uploader("Scegli un file", type=["csv", "json"])
 
     if uploaded_file is not None:
-        if st.button("Importa Domande"):
-            success, message = import_questions_from_file(uploaded_file)
-
-            if success:
-                st.success(message)
-                st.rerun()
-            else:
-                st.error(message)
+        # 将文件存储到session state以供回调函数使用
+        st.session_state.uploaded_file_content_set = uploaded_file
+        
+        # 使用回调函数的按钮
+        st.button(
+            "Importa Domande",
+            key="import_questions_set_btn",
+            on_click=import_set_callback
+        )

@@ -231,11 +231,11 @@ if st.session_state.editing_preset:
         # Pulsanti Salva e Annulla
         cols_form_buttons = st.columns(2)
         with cols_form_buttons[0]:
-            if st.form_submit_button("💾 Salva Preset", type="primary", use_container_width=True):
-                save_preset_from_form()
+            if st.form_submit_button("💾 Salva Preset", on_click=save_preset_from_form, type="primary", use_container_width=True):
+                pass  # Il callback gestisce il salvataggio
         with cols_form_buttons[1]:
-            if st.form_submit_button("❌ Annulla", use_container_width=True):
-                cancel_preset_edit()
+            if st.form_submit_button("❌ Annulla", on_click=cancel_preset_edit, use_container_width=True):
+                pass  # Il callback gestisce il cambio di stato
 else:
     add_section_title("Preset API Salvati", icon="🗂️")
     if st.button("➕ Crea Nuovo Preset", on_click=start_new_preset_edit, use_container_width=True):

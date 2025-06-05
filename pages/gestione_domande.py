@@ -14,6 +14,81 @@ from utils.data_utils import (
 )
 from utils.ui_utils import add_page_header, add_section_title, create_card, create_metrics_container
 
+# === CALLBACK FUNCTIONS ===
+
+def save_question_callback(question_id, edited_question, edited_answer, edited_category):
+    """回调函数：保存问题修改"""
+    if update_question(question_id, testo_domanda=edited_question, risposta_prevista=edited_answer,
+                       categoria=edited_category):
+        st.session_state.save_success_message = "Domanda aggiornata con successo!"
+        st.session_state.save_success = True
+        # 更新session state中的questions以反映修改
+        st.session_state.questions.loc[st.session_state.questions['id'] == question_id, 'categoria'] = edited_category
+        st.session_state.trigger_rerun = True
+    else:
+        st.session_state.save_error_message = "Impossibile aggiornare la domanda."
+        st.session_state.save_error = True
+
+def delete_question_callback(question_id):
+    """回调函数：删除问题"""
+    delete_question(question_id)
+    st.session_state.delete_success_message = "Domanda eliminata con successo!"
+    st.session_state.delete_success = True
+    st.session_state.trigger_rerun = True
+
+def import_questions_callback():
+    """回调函数：导入问题"""
+    if 'uploaded_file_content' in st.session_state and st.session_state.uploaded_file_content is not None:
+        success, message = import_questions_from_file(st.session_state.uploaded_file_content)
+        
+        if success:
+            st.session_state.import_success_message = message
+            st.session_state.import_success = True
+            st.session_state.trigger_rerun = True
+        else:
+            st.session_state.import_error_message = message
+            st.session_state.import_error = True
+
+# === 初始化状态变量 ===
+if 'save_success' not in st.session_state:
+    st.session_state.save_success = False
+if 'save_error' not in st.session_state:
+    st.session_state.save_error = False
+if 'delete_success' not in st.session_state:
+    st.session_state.delete_success = False
+if 'import_success' not in st.session_state:
+    st.session_state.import_success = False
+if 'import_error' not in st.session_state:
+    st.session_state.import_error = False
+if 'trigger_rerun' not in st.session_state:
+    st.session_state.trigger_rerun = False
+
+# 处理rerun逻辑
+if st.session_state.trigger_rerun:
+    st.session_state.trigger_rerun = False
+    st.rerun()
+
+# 显示状态消息
+if st.session_state.save_success:
+    st.success(st.session_state.get('save_success_message', 'Operazione completata con successo!'))
+    st.session_state.save_success = False
+
+if st.session_state.save_error:
+    st.error(st.session_state.get('save_error_message', 'Si è verificato un errore.'))
+    st.session_state.save_error = False
+
+if st.session_state.delete_success:
+    st.success(st.session_state.get('delete_success_message', 'Eliminazione completata con successo!'))
+    st.session_state.delete_success = False
+
+if st.session_state.import_success:
+    st.success(st.session_state.get('import_success_message', 'Importazione completata con successo!'))
+    st.session_state.import_success = False
+
+if st.session_state.import_error:
+    st.error(st.session_state.get('import_error_message', 'Errore durante l\'importazione.'))
+    st.session_state.import_error = False
+
 # Aggiungi un'intestazione stilizzata
 add_page_header(
     "Gestione Domande",
@@ -85,22 +160,21 @@ with tabs[0]:
                         )
 
                     with col2:
-                        # Pulsante Aggiorna
-                        if st.button("Salva Modifiche", key=f"save_{row['id']}"):
-                            if update_question(row['id'], testo_domanda=edited_question, risposta_prevista=edited_answer,
-                                               categoria=edited_category):
-                                st.success("Domanda aggiornata con successo!")
-                                # Aggiorna st.session_state.questions per riflettere la modifica della categoria nel filtro
-                                st.session_state.questions.loc[st.session_state.questions['id'] == row['id'], 'categoria'] = edited_category
-                                st.rerun()
-                            else:
-                                st.error("Impossibile aggiornare la domanda.")
+                        # Pulsante Aggiorna con callback
+                        st.button(
+                            "Salva Modifiche", 
+                            key=f"save_{row['id']}",
+                            on_click=save_question_callback,
+                            args=(row['id'], edited_question, edited_answer, edited_category)
+                        )
 
-                        # Pulsante Elimina
-                        if st.button("Elimina Domanda", key=f"delete_{row['id']}"):
-                            delete_question(row['id'])
-                            st.success("Domanda eliminata con successo!")
-                            st.rerun()
+                        # Pulsante Elimina con callback
+                        st.button(
+                            "Elimina Domanda", 
+                            key=f"delete_{row['id']}",
+                            on_click=delete_question_callback,
+                            args=(row['id'],)
+                        )
         else:
             st.info(f"Nessuna domanda trovata per la categoria '{selected_category}'.")
 
@@ -173,12 +247,12 @@ with tabs[2]:
     uploaded_file = st.file_uploader("Scegli un file", type=["csv", "json"])
 
     if uploaded_file is not None:
-        if st.button("Importa Domande"):
-            success, message = import_questions_from_file(uploaded_file)
-
-            if success:
-                st.success(message)
-                st.rerun()
-            else:
-                st.error(message)
-
+        # 将文件存储到session state以供回调函数使用
+        st.session_state.uploaded_file_content = uploaded_file
+        
+        # 使用回调函数的按钮
+        st.button(
+            "Importa Domande",
+            key="import_questions_btn",
+            on_click=import_questions_callback
+        )

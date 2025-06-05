@@ -406,7 +406,3 @@ with st.expander("Informazioni sull'algoritmo BM25"):
     
     Questa valutazione è particolarmente utile per misurare la qualità delle risposte in modo oggettivo, basato sulla presenza dei concetti chiave richiesti nella risposta.
     """)
-
-# Link per tornare alla pagina Esecuzione Test
-st.markdown("---")
-st.markdown("👈 [Torna alla pagina Esecuzione Test](/Esecuzione%20Test)")
