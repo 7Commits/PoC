@@ -1,0 +1,102 @@
+[
+  {
+    "domanda": "Qual è la capitale della Francia?",
+    "risposta_attesa": "Parigi",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Germania?",
+    "risposta_attesa": "Berlino",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale dell'Italia?",
+    "risposta_attesa": "Roma",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Spagna?",
+    "risposta_attesa": "Madrid",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale del Regno Unito?",
+    "risposta_attesa": "Londra",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Grecia?",
+    "risposta_attesa": "Atene",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Svezia?",
+    "risposta_attesa": "Stoccolma",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Norvegia?",
+    "risposta_attesa": "Oslo",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale dei Paesi Bassi?",
+    "risposta_attesa": "Amsterdam",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Danimarca?",
+    "risposta_attesa": "Copenaghen",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Polonia?",
+    "risposta_attesa": "Varsavia",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Belgio?",
+    "risposta_attesa": "Bruxelles",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Svizzera?",
+    "risposta_attesa": "Berna",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale dell'Austria?",
+    "risposta_attesa": "Vienna",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Finlandia?",
+    "risposta_attesa": "Helsinki",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Repubblica Ceca?",
+    "risposta_attesa": "Praga",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale del Portogallo?",
+    "risposta_attesa": "Lisboa",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Romania?",
+    "risposta_attesa": "Bucarest",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale dell'Ungheria?",
+    "risposta_attesa": "Budapest",
+    "categoria": "Capitali"
+  },
+  {
+    "domanda": "Qual è la capitale della Bulgaria?",
+    "risposta_attesa": "Sofia",
+    "categoria": "Capitali"
+  }
+]

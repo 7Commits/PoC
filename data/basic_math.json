@@ -1,0 +1,102 @@
+[
+  {
+    "domanda": "Quanto fa 7 + 5?",
+    "risposta_attesa": "12",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 9 x 3?",
+    "risposta_attesa": "27",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Qual è il quadrato di 6?",
+    "risposta_attesa": "36",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 100 ÷ 4?",
+    "risposta_attesa": "25",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Qual è la radice quadrata di 49?",
+    "risposta_attesa": "7",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 15 - 8?",
+    "risposta_attesa": "7",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Qual è il risultato di 5²?",
+    "risposta_attesa": "25",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 3 x (2 + 4)?",
+    "risposta_attesa": "18",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 10 % di 200?",
+    "risposta_attesa": "20",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Qual è il minimo comune multiplo di 4 e 6?",
+    "risposta_attesa": "12",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa (8 + 2) x 5?",
+    "risposta_attesa": "50",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 2³?",
+    "risposta_attesa": "8",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Qual è il massimo comune divisore di 18 e 24?",
+    "risposta_attesa": "6",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 0 x 154?",
+    "risposta_attesa": "0",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Qual è il reciproco di 2?",
+    "risposta_attesa": "1/2",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 1/4 + 1/2?",
+    "risposta_attesa": "3/4",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 0.1 + 0.2?",
+    "risposta_attesa": "0.3",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Qual è il risultato di -3 + 7?",
+    "risposta_attesa": "4",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Quanto fa 20 % di 80?",
+    "risposta_attesa": "16",
+    "categoria": "Matematica di Base"
+  },
+  {
+    "domanda": "Qual è la metà di 1.5?",
+    "risposta_attesa": "0.75",
+    "categoria": "Matematica di Base"
+  }
+]

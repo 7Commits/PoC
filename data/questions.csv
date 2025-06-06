@@ -1,0 +1,60 @@
+id,domanda,risposta_attesa,categoria
+f051d43f-a099-4dc2-b12c-d400e7903da7,Qual è il quadrato di 6?,36,Matematica di Base
+520b3a45-977c-436d-a393-1f7eda68111f,Quanto fa 100 ÷ 4?,25,Matematica di Base
+eb44677c-6c3a-4bcc-a43d-16edae7ff1bf,Qual è la radice quadrata di 49?,7,Matematica di Base
+a724c198-931c-4abf-814c-100356191f93,Quanto fa 15 - 8?,7,Matematica di Base
+e253550c-6e04-423d-b276-1381d79c5af8,Qual è il risultato di 5²?,25,Matematica di Base
+0fffd5d0-4d48-4b51-be4e-d9e8e8ad2ca5,Quanto fa 3 x (2 + 4)?,18,Matematica di Base
+e16786cb-2261-493a-8712-b33ac4b5c142,Quanto fa 10 % di 200?,20,Matematica di Base
+514ce7bf-823d-4baf-b9c8-4a00600ea908,Qual è il minimo comune multiplo di 4 e 6?,12,Matematica di Base
+865097f0-a89b-4f9c-bdee-c0429ec27b2c,Quanto fa (8 + 2) x 5?,50,Matematica di Base
+9f90d803-38f6-4f15-9c51-2d1848602e08,Quanto fa 2³?,8,Matematica di Base
+cf805fa2-8fe2-4b58-b213-399136c3c030,Qual è il massimo comune divisore di 18 e 24?,6,Matematica di Base
+11a3d746-e565-4458-a4cf-eb2f31f00d09,Quanto fa 0 x 154?,0,Matematica di Base
+2e903e0b-bc0f-4a09-805b-1842f1f93cf7,Qual è il reciproco di 2?,1/2,Matematica di Base
+23f3e6da-71bd-4ae3-8084-3d3a2d3875e0,Quanto fa 1/4 + 1/2?,3/4,Matematica di Base
+de9450e6-6876-4dfa-9fbd-1bbc5a7b26aa,Quanto fa 0.1 + 0.2?,0.3,Matematica di Base
+40064003-197c-4163-9a16-86cddbea341c,Qual è il risultato di -3 + 7?,4,Matematica di Base
+320626f1-054c-4da8-a4a3-0a8a7662aa3f,Quanto fa 20 % di 80?,16,Matematica di Base
+87d176d4-5190-4126-9aaf-9f291cb69007,Qual è la metà di 1.5?,0.75,Matematica di Base
+c64efc53-5a3e-46ea-8293-7ade24b886bb,Quanto fa 7 + 5?,12,Matematica di Base
+deafc6ae-decd-4fd0-8d6d-438b90d36e58,Quanto fa 9 × 3?,27,Matematica di Base
+372bf717-e147-401e-a477-3705388f73bd,Qual è il quadrato di 6?,36,Matematica di Base
+2e43b39f-4e38-4c8e-bf47-16d1797c53cc,Quanto fa 100 ÷ 4?,25,Matematica di Base
+5045a59c-6e92-4069-9ae4-14b63d745d0d,Qual è la radice quadrata di 49?,7,Matematica di Base
+4ee6f745-e500-4cfc-affd-103edc8a8c87,Quanto fa 15 - 8?,7,Matematica di Base
+1e8974db-17a1-42fd-befa-382b65d0e742,Qual è il risultato di 5²?,25,Matematica di Base
+15d2eb56-6bb6-4975-9a91-cb657c4471eb,Quanto fa 3 × (2 + 4)?,18,Matematica di Base
+c7186103-8dfd-4d25-8873-405b85078a1b,Quanto fa 10 % di 200?,20,Matematica di Base
+f86e3a38-0a40-4116-ba15-d1708d84e1dd,Qual è il minimo comune multiplo di 4 e 6?,12,Matematica di Base
+4fe182fb-5894-46e8-b0a5-f7197af72ee2,Quanto fa (8 + 2) × 5?,50,Matematica di Base
+05ba39ee-ba12-41d1-8d7c-4ab5b7b216c6,Quanto fa 2³?,8,Matematica di Base
+b69ebaa6-1413-46bb-91cd-5585da5a56b4,Qual è il massimo comune divisore di 18 e 24?,6,Matematica di Base
+28ff22b3-2565-4700-b0e9-027dbb4aa862,Quanto fa 0 × 154?,0,Matematica di Base
+97a38e3b-b87e-48f9-9360-cfbea3bd822f,Qual è il reciproco di 2?,1/2,Matematica di Base
+40563245-06cc-4956-bddd-248f6418c00d,Quanto fa 1/4 + 1/2?,3/4,Matematica di Base
+c136bf44-742d-4493-b26c-63b72ab2279d,Quanto fa 0.1 + 0.2?,0.3,Matematica di Base
+42c1bc09-0949-4cdc-b8c2-408f8109d544,Qual è il risultato di -3 + 7?,4,Matematica di Base
+2b5d1726-d399-4100-b6a6-abeb46f598ae,Quanto fa 20 % di 80?,16,Matematica di Base
+481e3cbb-0b18-4139-a2e3-7a723b014414,Qual è la metà di 1.5?,0.75,Matematica di Base
+d1570b42-b01c-48c6-9c19-4ed6cf417c90,Qual è la capitale della Francia?,Parigi,Capitali
+2554f189-4c9f-4ebe-b475-6be2f4cf6f56,Qual è la capitale della Germania?,Berlino,Capitali
+a2608578-e0be-42bf-8060-bec2ed7fa8ec,Qual è la capitale dell'Italia?,Roma,Capitali
+fd292041-d79d-400b-b333-96c579b80ac5,Qual è la capitale della Spagna?,Madrid,Capitali
+923fe770-6b7f-45fb-8adb-a891ee87bd70,Qual è la capitale del Regno Unito?,Londra,Capitali
+f758b801-aa8a-4778-ae91-676e67d05148,Qual è la capitale della Grecia?,Atene,Capitali
+1f9ab468-f92b-4107-b37d-29c2efd1331b,Qual è la capitale della Svezia?,Stoccolma,Capitali
+12714d1c-97a1-41fc-9782-db56b8b57c8e,Qual è la capitale della Norvegia?,Oslo,Capitali
+ff047143-7bc0-4444-bb3e-31c6f5000a8c,Qual è la capitale dei Paesi Bassi?,Amsterdam,Capitali
+4f98a718-03b3-41e6-81f6-90296532138e,Qual è la capitale della Danimarca?,Copenaghen,Capitali
+4024de79-d256-4b26-be15-8afd769254aa,Qual è la capitale della Polonia?,Varsavia,Capitali
+52b8f680-bb7e-4fc1-8151-191552850771,Qual è la capitale della Belgio?,Bruxelles,Capitali
+40894524-2160-4aae-b169-a6966598580b,Qual è la capitale della Svizzera?,Berna,Capitali
+07cafa28-0259-47d3-9285-9abb455f821e,Qual è la capitale dell'Austria?,Vienna,Capitali
+8a96aa6d-e976-41ac-9b09-2461e9af8af7,Qual è la capitale della Finlandia?,Helsinki,Capitali
+371af137-9edb-49ce-977c-06b03dcae599,Qual è la capitale della Repubblica Ceca?,Praga,Capitali
+52ce73ef-67b8-4bcf-8ae6-458a96657bd4,Qual è la capitale del Portogallo?,Lisboa,Capitali
+1019288e-6c37-42b8-8a26-4167a1836aa9,Qual è la capitale della Romania?,Bucarest,Capitali
+742219a0-76cf-4c70-a14f-fa11e0dd6c40,Qual è la capitale dell'Ungheria?,Budapest,Capitali
+62f15176-ca1d-4cae-9c12-13e943758621,Qual è la capitale della Bulgaria?,Sofia,Capitali
+d6a8a902-920e-41bc-9c2a-ecf7d6980f6a,Di che colore è il cavallo bianco di Napoleone?,Bianco,
