@@ -40,11 +40,30 @@ def save_set_callback(set_id, edited_name, question_options_checkboxes, newly_se
         st.session_state.save_set_error_message = "Impossibile aggiornare il set di domande."
         st.session_state.save_set_error = True
 
+
 def delete_set_callback(set_id):
     delete_question_set(set_id)
     st.session_state.delete_set_success_message = "Set di domande eliminato con successo!"
     st.session_state.delete_set_success = True
     st.session_state.trigger_rerun = True
+
+
+@st.dialog("Conferma Eliminazione")
+def confirm_delete_set_dialog(set_id, set_name):
+    """Dialog di conferma per l'eliminazione del set di domande"""
+    st.write(f"Sei sicuro di voler eliminare il set '{set_name}'?")
+    st.warning("Questa azione non può essere annullata.")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("Sì, Elimina", type="primary", use_container_width=True):
+            delete_set_callback(set_id)
+            st.rerun()
+    
+    with col2:
+        if st.button("No, Annulla", use_container_width=True):
+            st.rerun()
 
 def import_set_callback():
     """
@@ -305,6 +324,7 @@ def create_save_set_callback(set_id):
     
     return callback
 
+
 def create_delete_set_callback(set_id):
     def callback():
         delete_set_callback(set_id)
@@ -444,11 +464,13 @@ with tabs[0]:
                         on_click=create_save_set_callback(row['id'])
                     )
 
-                    st.button(
+                    # Pulsante Elimina con dialog di conferma
+                    if st.button(
                         "Elimina Set", 
                         key=f"delete_set_{row['id']}",
-                        on_click=create_delete_set_callback(row['id'])
-                    )
+                        type="secondary"
+                    ):
+                        confirm_delete_set_dialog(row['id'], row['name'])
 
     elif not sets_ready or (st.session_state.question_sets.empty and not selected_categories):
         st.info("Nessun set di domande disponibile. Crea un nuovo set utilizzando la scheda 'Crea Nuovo Set'.")
@@ -555,3 +577,6 @@ with tabs[2]:
             key="import_set_btn",
             on_click=import_set_callback
         )
+
+# === DIALOG FUNCTIONS ===
+

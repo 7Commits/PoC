@@ -234,6 +234,7 @@ def update_sets_after_question_deletion(question_id):
         save_question_sets(sets_df)
 
 def create_question_set(name, question_ids=None):
+    """Crea un nuovo set di domande."""
     sets_df = st.session_state.question_sets.copy()
     new_set_data = {'id': str(uuid.uuid4()), 'name': str(name), 'questions': [str(qid) for qid in question_ids] if question_ids else []}
     new_set_df = pd.DataFrame([new_set_data])
@@ -251,6 +252,43 @@ def update_question_set(set_id, name=None, question_ids=None):
         if updated: save_question_sets(sets_df)
         return True
     return False
+
+
+def add_question_set(name, question_ids=None):
+    """
+    Aggiunge un nuovo set di domande.
+
+    Args:
+        name: Nome del nuovo set di domande
+        question_ids: Lista opzionale di ID delle domande da includere nel set
+
+    Returns:
+        L'ID del nuovo set di domande creato
+    """
+    # Carica i set di domande esistenti
+    sets_df = st.session_state.question_sets.copy()
+
+    # Crea un nuovo ID per il set
+    new_set_id = str(uuid.uuid4())
+
+    # Prepara i dati del nuovo set
+    new_set_data = {
+        'id': new_set_id,
+        'name': str(name),
+        'questions': [str(qid) for qid in question_ids] if question_ids else []
+    }
+
+    # Converte in DataFrame e aggiunge al DataFrame esistente
+    new_set_df = pd.DataFrame([new_set_data])
+    sets_df = pd.concat([sets_df, new_set_df], ignore_index=True)
+
+    # Salva i set aggiornati
+    save_question_sets(sets_df)
+
+    # Restituisce l'ID del nuovo set
+    return new_set_id
+
+
 
 def delete_question_set(set_id):
     sets_df = st.session_state.question_sets.copy()

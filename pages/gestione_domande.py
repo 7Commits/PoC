@@ -49,6 +49,26 @@ def import_questions_callback():
             st.session_state.import_error_message = message
             st.session_state.import_error = True
 
+# === DIALOG FUNCTIONS ===
+
+@st.dialog("Conferma Eliminazione")
+def confirm_delete_question_dialog(question_id, question_text):
+    """Dialog di conferma per l'eliminazione della domanda"""
+    st.write(f"Sei sicuro di voler eliminare questa domanda?")
+    st.write(f"**Domanda:** {question_text[:100]}...")
+    st.warning("Questa azione non può essere annullata.")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("Sì, Elimina", type="primary", use_container_width=True):
+            delete_question_callback(question_id)
+            st.rerun()
+    
+    with col2:
+        if st.button("No, Annulla", use_container_width=True):
+            st.rerun()
+
 # === 初始化状态变量 ===
 if 'save_success' not in st.session_state:
     st.session_state.save_success = False
@@ -168,13 +188,13 @@ with tabs[0]:
                             args=(row['id'], edited_question, edited_answer, edited_category)
                         )
 
-                        # Pulsante Elimina con callback
-                        st.button(
+                        # Pulsante Elimina con dialog di conferma
+                        if st.button(
                             "Elimina Domanda", 
                             key=f"delete_{row['id']}",
-                            on_click=delete_question_callback,
-                            args=(row['id'],)
-                        )
+                            type="secondary"
+                        ):
+                            confirm_delete_question_dialog(row['id'], row['domanda'])
         else:
             st.info(f"Nessuna domanda trovata per la categoria '{selected_category}'.")
 
