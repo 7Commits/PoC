@@ -299,3 +299,37 @@ def import_questions_from_file(file):
     except Exception as e:
         return False, f"Errore durante l'importazione delle domande: {str(e)}"
 
+def add_question_if_not_exists(question_id: str, testo_domanda: str, risposta_prevista: str, categoria: str = ""):
+    """
+    Aggiunge una domanda al DataFrame delle domande se un ID specificato non esiste già.
+    Restituisce True se la domanda è stata aggiunta, False se esisteva già.
+    """
+    # Assicurati che 'questions' sia in session_state e sia un DataFrame
+    if 'questions' not in st.session_state or not isinstance(st.session_state.questions, pd.DataFrame):
+        st.session_state.questions = load_questions() # Carica se non presente
+
+    questions_df = st.session_state.questions.copy()
+
+    # Controlla se l'ID esiste già, assicurando il confronto tra stringhe
+    if str(question_id) in questions_df['id'].astype(str).values:
+        return False  # Domanda già esistente
+
+    new_question_data = {
+        'id': str(question_id),
+        'domanda': str(testo_domanda),
+        'risposta_attesa': str(risposta_prevista),
+        'categoria': str(categoria) if categoria else ""
+    }
+    # Gestione di DataFrame vuoto o con colonne mancanti
+    if questions_df.empty:
+        questions_df = pd.DataFrame([new_question_data], columns=['id', 'domanda', 'risposta_attesa', 'categoria'])
+    else:
+        new_question_df = pd.DataFrame([new_question_data])
+        questions_df = pd.concat([questions_df, new_question_df], ignore_index=True)
+    
+    save_questions(questions_df) # Salva il DataFrame aggiornato nello stato e nel file
+    return True
+
+# ... (il resto del codice di data_utils.py rimane invariato, inclusa la funzione import_questions_from_file) ...
+# Assicurati di inserire questa nuova funzione nel punto appropriato del file, 
+# ad esempio dopo le altre funzioni di manipolazione delle domande.
