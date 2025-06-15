@@ -12,7 +12,7 @@ from utils.data_utils import (
     load_questions, save_questions, add_question, update_question,
     delete_question, import_questions_from_file
 )
-from utils.ui_utils import add_page_header, add_section_title, create_card, create_metrics_container
+from utils.ui_utils import add_page_header, add_section_title, create_card
 
 
 # === FUNZIONI DI CALLBACK ===

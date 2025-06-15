@@ -14,10 +14,6 @@ from utils.openai_utils import (
     evaluate_answer, generate_example_answer_with_llm  # Client viene creato internamente
 )
 from utils.ui_utils import add_page_header, add_section_title, create_card
-from utils.bm25 import (
-    calcola_similarita_normalizzata, analizza_parole_chiave,
-    genera_suggerimenti, segmenta_testo
-)
 
 
 # === FUNZIONI DI CALLBACK ===
@@ -29,21 +25,9 @@ def set_llm_mode_callback():
         st.session_state.mode_changed = True
 
 
-def set_bm25_mode_callback():
-    """Funzione di callback: imposta la modalità BM25"""
-    if st.session_state.test_mode != "Valutazione con BM25":
-        st.session_state.test_mode = "Valutazione con BM25"
-        st.session_state.mode_changed = True
-
-
 def run_llm_test_callback():
     """Funzione di callback: esegue il test LLM"""
     st.session_state.run_llm_test = True
-
-
-def run_bm25_test_callback():
-    """Funzione di callback: esegue il test BM25"""
-    st.session_state.run_bm25_test = True
 
 
 # === Inizializzazione delle variabili di stato ===
@@ -128,96 +112,6 @@ selected_set_id = st.selectbox(
 selected_set = st.session_state.question_sets[st.session_state.question_sets['id'] == selected_set_id].iloc[0]
 questions_in_set = selected_set['questions']
 
-# --- Selezione Modalità Test (UI Migliorata) ---
-st.markdown("## 📌 Seleziona modalità test")
-
-selection_container = st.container()
-with selection_container:
-    # CSS per lo stile (ridotto per brevità)
-    st.markdown("""
-    <style>
-    .mode-box {
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-    .selected-mode {
-        border-color: #4CAF50;
-        background-color: #f1f8e9;
-    }
-    .unselected-mode {
-        border-color: #e0e0e0;
-        background-color: #ffffff;
-    }
-    .mode-title {
-        font-weight: bold;
-        font-size: 1.1em;
-        margin-bottom: 5px;
-    }
-    .mode-description {
-        font-size: 0.9em;
-        color: #666;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    col_sel1, col_sel2 = st.columns(2)
-    current_mode_sel = st.session_state.test_mode
-
-    with col_sel1:
-        is_auto_sel = current_mode_sel == "Valutazione Automatica con LLM"
-        auto_box_class = "selected-mode" if is_auto_sel else "unselected-mode"
-        st.markdown(f'''
-        <div class="mode-box {auto_box_class}">
-            <div class="mode-title">🤖 Valutazione Automatica con LLM</div>
-            <div class="mode-description">Genera e valuta risposte con modelli linguistici avanzati</div>
-        </div>
-        ''', unsafe_allow_html=True)
-
-        # Pulsante che utilizza la funzione di callback
-        button_text = "✓ MODALITÀ ATTIVA" if is_auto_sel else "✅ SELEZIONA"
-        button_type = "primary" if is_auto_sel else "secondary"
-        st.button(
-            button_text,
-            key="llm_mode_btn",
-            use_container_width=True,
-            type=button_type,
-            on_click=set_llm_mode_callback,
-            disabled=is_auto_sel
-        )
-
-    with col_sel2:
-        is_bm25_sel = current_mode_sel == "Valutazione con BM25"
-        bm25_box_class = "selected-mode" if is_bm25_sel else "unselected-mode"
-        st.markdown(f'''
-        <div class="mode-box {bm25_box_class}">
-            <div class="mode-title">🔍 Valutazione con BM25</div>
-            <div class="mode-description">Analizza la somiglianza semantica basata sui termini condivisi</div>
-        </div>
-        ''', unsafe_allow_html=True)
-
-        # Pulsante che utilizza la funzione di callback
-        button_text = "✓ MODALITÀ ATTIVA" if is_bm25_sel else "✅ SELEZIONA"
-        button_type = "primary" if is_bm25_sel else "secondary"
-        st.button(
-            button_text,
-            key="bm25_mode_btn",
-            use_container_width=True,
-            type=button_type,
-            on_click=set_bm25_mode_callback,
-            disabled=is_bm25_sel
-        )
-
-mode_icon_sel = "🤖" if st.session_state.test_mode == "Valutazione Automatica con LLM" else "🔍"
-st.markdown(f'''
-<div style="text-align: center; padding: 10px; background-color: #f0f0f0; border-radius: 5px; margin: 10px 0;">
-    <strong>{mode_icon_sel} MODALITÀ SELEZIONATA: {st.session_state.test_mode}</strong>
-</div>
-''', unsafe_allow_html=True)
-st.markdown("---")
 
 # --- Opzioni API basate su Preset ---
 add_section_title("Opzioni API basate su Preset", icon="🛠️")
@@ -346,117 +240,3 @@ if test_mode_selected == "Valutazione Automatica con LLM":
                                 st.write("**Punteggio:**", f"{result['evaluation']['score']:.1f}%")
                                 st.write("**Valutazione:**", result['evaluation']['explanation'])
 
-elif test_mode_selected == "Valutazione con BM25":
-    st.header("Esecuzione: Valutazione con BM25")
-
-    # Parametri BM25
-    k1_bm25 = st.slider("k1 (BM25)", 0.5, 3.0, 1.5, 0.1, key="bm25_k1_slider")
-    b_bm25 = st.slider("b (BM25)", 0.0, 1.0, 0.75, 0.05, key="bm25_b_slider")
-    high_threshold_bm25_val = st.slider("Soglia Match Alto (BM25 %)", 50, 100, 80, 1, key="bm25_high_thresh_slider")
-    medium_threshold_bm25_val = st.slider("Soglia Match Medio (BM25 %)", 20, 80, 50, 1, key="bm25_medium_thresh_slider")
-
-    # Pulsante che utilizza la funzione di callback
-    st.button(
-        "🚀 Esegui Test con BM25",
-        key="run_bm25_test_btn",
-        on_click=run_bm25_test_callback
-    )
-
-    # Gestisce l'esecuzione del test
-    if st.session_state.run_bm25_test:
-        st.session_state.run_bm25_test = False  # Resetta lo stato
-
-        gen_preset_config = get_preset_config_by_name(st.session_state.selected_generation_preset_name)
-        if not gen_preset_config:
-            st.error("Seleziona un preset valido per la generazione delle risposte.")
-        else:
-            with st.spinner("Generazione risposte e valutazione BM25 in corso..."):
-                results = {}
-                for q_id in questions_in_set:
-                    q_data = get_question_data(q_id)
-                    if q_data:
-                        generation_output = generate_example_answer_with_llm(q_data['question'],
-                                                                             client_config=gen_preset_config,
-                                                                             show_api_details=show_api_details)
-                        actual_answer = generation_output["answer"]
-                        generation_api_details = generation_output["api_details"]
-
-                        if actual_answer is None:
-                            # Log più dettagliato dell'errore per diagnostica
-                            st.error(
-                                f"Errore nella generazione della risposta per la domanda: {q_data['question'][:50]}...")
-
-                            # Salviamo informazioni più dettagliate nell'oggetto risultati
-                            results[q_id] = {
-                                'question': q_data['question'],
-                                'expected_answer': q_data['expected_answer'],
-                                'actual_answer': "Errore Generazione",
-                                'similarity_score': 0,
-                                'match_level': 'basso',
-                                'missing_keywords': [],
-                                'extra_keywords': [],
-                                'suggestions': "Non è stato possibile generare una risposta per questa domanda. Verificare le impostazioni del preset API.",
-                                'evaluation': {'score': 0, 'explanation': "Errore nella generazione della risposta."},
-                                'generation_api_details': generation_api_details
-                                # Salva anche se la generazione fallisce
-                            }
-                            continue
-
-                        similarity_score = calcola_similarita_normalizzata(q_data['expected_answer'], actual_answer,
-                                                                           k1=k1_bm25, b=b_bm25)
-                        match_level = "alto" if similarity_score >= high_threshold_bm25_val else (
-                            "medio" if similarity_score >= medium_threshold_bm25_val else "basso")
-                        missing_keywords, extra_keywords = analizza_parole_chiave(q_data['expected_answer'],
-                                                                                  actual_answer)
-                        suggestions = genera_suggerimenti(missing_keywords, match_level)
-
-                        results[q_id] = {
-                            'question': q_data['question'],
-                            'expected_answer': q_data['expected_answer'],
-                            'actual_answer': actual_answer,
-                            'similarity_score': similarity_score,
-                            'match_level': match_level,
-                            'missing_keywords': missing_keywords,
-                            'extra_keywords': extra_keywords,
-                            'suggestions': suggestions,
-                            'evaluation': {'score': similarity_score, 'explanation': suggestions},
-                            # Adattare per coerenza
-                            'generation_api_details': generation_api_details  # Dettagli API della GENERAZIONE
-                        }
-
-                # Salva e visualizza risultati
-                if results:
-                    avg_score = sum(r['similarity_score'] for r in results.values()) / len(results) if results else 0
-                    result_data = {
-                        'set_name': selected_set['name'],
-                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        'avg_score': avg_score,
-                        'sample_type': 'Generata da LLM',
-                        'method': 'BM25',
-                        'generation_preset': gen_preset_config['name'],
-                        'parameters': {
-                            'k1': k1_bm25,
-                            'b': b_bm25,
-                            'high_threshold': high_threshold_bm25_val,
-                            'medium_threshold': medium_threshold_bm25_val
-                        },
-                        'questions': results
-                    }
-                    result_id = add_test_result(selected_set_id, result_data)
-                    st.success(f"Test BM25 completato! Punteggio medio: {avg_score:.2f}%")
-
-                    # Visualizzazione risultati dettagliati
-                    st.subheader("Risultati Dettagliati")
-                    for q_id, result in results.items():
-                        with st.expander(f"Domanda: {result['question'][:50]}..."):
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                st.write("**Domanda:**", result['question'])
-                                st.write("**Risposta Attesa:**", result['expected_answer'])
-                                st.write("**Risposta Generata:**", result['actual_answer'])
-                            with col2:
-                                st.write("**Punteggio Similarità:**", f"{result['similarity_score']:.1f}%")
-                                st.write("**Livello Match:**", result['match_level'])
-                                st.write("**Parole Chiave Mancanti:**", ", ".join(result['missing_keywords']) if result[
-                                    'missing_keywords'] else "Nessuna")
-                                st.write("**Suggerimenti:**", result['suggestions'])
