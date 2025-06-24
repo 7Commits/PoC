@@ -4,8 +4,8 @@ import streamlit as st
 from openai import OpenAI, APIConnectionError, RateLimitError, APIStatusError
 import traceback
 
-DEFAULT_MODEL = "gpt-4o" # Assicurati che sia un modello valido per i tuoi test
-DEFAULT_ENDPOINT = "https://api.openai.com/v1" # Endpoint di default
+DEFAULT_MODEL = "gpt-4o"
+DEFAULT_ENDPOINT = "https://api.openai.com/v1"
 
 # Modelli disponibili per diversi provider (esempio)
 OPENAI_MODELS = ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
@@ -235,18 +235,16 @@ def get_available_models_for_endpoint(provider_name: str, endpoint_url: str = No
             return ["(Errore creazione client API)", DEFAULT_MODEL]
         try:
             models = client.models.list()
-            # Filtra per modelli che non sono di embedding e, se possibile, che contengono "chat", "instruct" o "gpt"
-            # Questo è un euristica e potrebbe necessitare di aggiustamenti
+            # Filtra per modelli che non sono di embedding
             filtered_models = sorted([
                 model.id for model in models 
-                if not any(term in model.id.lower() for term in ["embed", "embedding", "ada", "babbage", "curie", "davinci", "text-"]) 
+                if not any(term in model.id.lower() for term in ["embed", "embedding"])
                 and (any(term in model.id.lower() for term in ["chat", "instruct", "gpt", "claude", "grok"]) or len(model.id.split('-')) > 2)
             ])
             if not filtered_models:
-                 # Se il filtro aggressivo non trova nulla, restituisci tutti i modelli non di embedding
-                 filtered_models = sorted([model.id for model in models if not any(term in model.id.lower() for term in ["embed", "embedding"])])
-            return filtered_models if filtered_models else ["(Nessun modello compatibile trovato)", DEFAULT_MODEL]
+                # Se il filtro aggressivo non trova nulla, restituisci tutti i modelli non di embedding
+                filtered_models = sorted([model.id for model in models if not any(term in model.id.lower() for term in ["embed", "embedding"])]);
+            return filtered_models if filtered_models else [DEFAULT_MODEL]
         except Exception as e:
-            # st.warning(f"Impossibile recuperare i modelli dall'endpoint personalizzato '{endpoint_url}': {e}")
             return ["(Errore recupero modelli)", DEFAULT_MODEL]
     return [DEFAULT_MODEL] # Default generale se il provider non è riconosciuto

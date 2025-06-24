@@ -60,8 +60,10 @@ def cancel_preset_edit():
     st.session_state.preset_form_data = {}
 
 def save_preset_from_form():
-    form_data = st.session_state.preset_form_data
-    preset_name = form_data.get("name", "").strip()
+    # Ottiene direttamente il valore dal campo input tramite session_state
+    form_data = st.session_state.preset_form_data.copy()
+    preset_name = st.session_state.get("preset_name", "").strip()
+    
     if not preset_name:
         st.error("Il nome del preset non può essere vuoto.")
         return
@@ -82,7 +84,7 @@ def save_preset_from_form():
 
     # Prepara i dati del preset da salvare
     preset_data_to_save = {
-        "name": preset_name,
+        "name": preset_name,  # Usa il valore validato
         "endpoint": form_data.get("endpoint"),
         "api_key": form_data.get("api_key"),
         "model": form_data.get("model"),
@@ -121,38 +123,59 @@ if st.session_state.editing_preset:
     form_data = st.session_state.preset_form_data
     
     with st.form(key="preset_form"):
-        form_data["name"] = st.text_input("Nome del Preset", value=form_data.get("name", ""), help="Un nome univoco per questo preset.")
+        # Usa un key specifico per il campo nome e aggiorna il form_data
+        form_data["name"] = st.text_input(
+            "Nome del Preset", 
+            value=form_data.get("name", ""),
+            key="preset_name",  # Key esplicita per il campo nome
+            help="Un nome univoco per questo preset."
+        )
         
-        # Endpoint sempre personalizzabile
+        # Campo chiave API con key esplicita
+        form_data["api_key"] = st.text_input(
+            "Chiave API", 
+            value=form_data.get("api_key", ""), 
+            type="password", 
+            key="preset_api_key",  # Key esplicita per la chiave API
+            help="La tua chiave API per il provider selezionato."
+        )
+        
+        # Campo endpoint con key esplicita
         form_data["endpoint"] = st.text_input(
             "Provider Endpoint", 
-            value=form_data.get("endpoint", DEFAULT_ENDPOINT), 
+            value=form_data.get("endpoint", DEFAULT_ENDPOINT),
             placeholder="https://api.openai.com/v1",
+            key="preset_endpoint",  # Key esplicita per l'endpoint
             help="Inserisci l'endpoint del provider API (es: https://api.openai.com/v1)"
         )
-
-        form_data["api_key"] = st.text_input("Chiave API", value=form_data.get("api_key", ""), type="password", help="La tua chiave API per il provider selezionato.")
         
         # Modello sempre personalizzabile
         form_data["model"] = st.text_input(
             "Modello", 
             value=form_data.get("model", DEFAULT_MODEL),
             placeholder="gpt-4o",
+            key="preset_model",  # Key esplicita per il modello
             help="Inserisci il nome del modello (es: gpt-4o, claude-3-sonnet, ecc.)"
         )
 
         form_data["temperature"] = st.slider("Temperatura", 0.0, 2.0, float(form_data.get("temperature", 0.0)), 0.1)
         form_data["max_tokens"] = st.number_input("Max Tokens", min_value=50, max_value=8000, value=int(form_data.get("max_tokens", 1000)), step=50)
         
+        # Campo Test Connessione e pulsanti di salvataggio/annullamento
         # Pulsante Test Connessione
         if st.form_submit_button("⚡ Testa Connessione API"):
+            # Usa direttamente i valori dal session_state per il test
+            api_key_to_test = st.session_state.get("preset_api_key", "")
+            endpoint_to_test = st.session_state.get("preset_endpoint", DEFAULT_ENDPOINT)
+            model_to_test = st.session_state.get("preset_model", DEFAULT_MODEL)
+            
             with st.spinner("Test in corso..."):
                 success, message = test_api_connection(
-                    api_key=form_data["api_key"],
-                    endpoint=form_data["endpoint"],
-                    model=form_data["model"],
-                    temperature=form_data["temperature"],
-                    max_tokens=form_data["max_tokens"]
+                    api_key=api_key_to_test,
+                    endpoint=endpoint_to_test,
+                    model=model_to_test,
+                    temperature=form_data.get("temperature", 0.0),
+                    max_tokens=form_data.get("max_tokens", 1000)
                 )
                 if success:
                     st.success(message)
@@ -202,3 +225,14 @@ if "preset_saved_message" in st.session_state:
 if "preset_deleted_message" in st.session_state:
     st.success(st.session_state.preset_deleted_message)
     del st.session_state.preset_deleted_message
+
+# Seleziona preset per la generazione di risposta
+preset_names_to_id = {preset['name']: preset['id'] for _, preset in st.session_state.api_presets.iterrows()}
+preset_display_names = list(preset_names_to_id.keys())
+
+if not preset_display_names:  # Aggiunta verifica per evitare riferimenti a variabile non definita
+    st.error("Nessun preset API configurato. Vai alla pagina 'Gestione Preset API' per crearne almeno uno prima di eseguire i test.")
+    st.stop()
+
+# Seleziona preset per valutazione (se presente)
+# Rimosso dalla pagina di configurazione API - appartiene alla pagina di esecuzione test

@@ -42,19 +42,6 @@ def initialize_data():
             'results': pd.Series(dtype='object')
         })
         results_df.to_csv(RESULTS_FILE, index=False)
-    
-    if not API_PRESETS_FILE.exists():
-        presets_df = pd.DataFrame({
-            'id': pd.Series(dtype='str'),
-            'name': pd.Series(dtype='str'), # Nome del preset definito dall'utente
-            'provider_name': pd.Series(dtype='str'), # Es. "OpenAI", "Anthropic", "Personalizzato"
-            'endpoint': pd.Series(dtype='str'), # URL dell'endpoint o "custom"
-            'api_key': pd.Series(dtype='str'), # Chiave API (considerare la sicurezza)
-            'model': pd.Series(dtype='str'), # Nome del modello
-            'temperature': pd.Series(dtype='float'),
-            'max_tokens': pd.Series(dtype='int')
-        })
-        presets_df.to_csv(API_PRESETS_FILE, index=False)
 
 
 def load_api_presets():
