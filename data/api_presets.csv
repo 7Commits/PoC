@@ -1,0 +1,4 @@
+id,name,provider_name,endpoint,api_key,model,temperature,max_tokens
+6ba759ec-d6ec-4942-a764-0fbb2180771d,test,nan,https://api.openai.com/v1,test,gpt-4o,0.0,1000
+fe0c7c11-a959-4627-8701-8bf33efb7501,12e12e,nan,https://api.openai.com/v1,qweqweqwe,gpt-4o,0.0,1000
+9813c48d-b32c-4f29-b63e-0bc9ed4f693e,1231,nan,https://api.openai.com/v1,nan,gpt-4o,0.0,1000
