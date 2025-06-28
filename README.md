@@ -50,21 +50,28 @@ $env:OPENAI_API_KEY="la-tua-api-key"
 ## **Struttura del progetto**
 ```md
 PoC/
-├── app.py # Main application script
-├── requirements.txt # Lista dipendenze
-├── pages/ # Page-specific scripts
-│ ├── api_configurazione.py # Configurazione API
-│ ├── esecuzione_test.py # Esecuzione test su domande
-│ ├── gestione_domande.py # Gestione domande
-│ ├── visualizza_risultati.py # Visualizzazione risultati test
-│ └── gestione_set.py # Gestione set di domande
-├── utils/ # Utility scripts
-│ ├── api_utils.py # Gestione Api utils
-│ ├── data_utils.py # Gestione dati utils
-│ ├── openai_utils.py # Gestione utils openai
-│ └── ui_utils.py # UI utils
-├── data/ # Data files (CSV)
-│ ├── questions.csv # Dati domande
-│ ├── question_sets.csv # Dati set domande
-│ ├──test_results.csv # Dati risultati test
-│ └── ... #Altri file (Set domande json ecc)
+├── app.py                     # Script principale dell'app Streamlit
+├── requirements.txt           # Lista delle dipendenze
+├── README.md                  # Documentazione del progetto
+├── .gitignore                 # File di configurazione Git per ignorare file
+├── data/                      # File di dati (CSV e JSON)
+│   ├── api_presets.csv        # Preset per configurazioni API
+│   ├── basic_math.json        # Set di domande su matematica di base
+│   ├── capital_cities.json    # Set di domande sulle capitali
+│   ├── question_sets.csv      # Set di domande in formato CSV
+│   ├── questions.csv          # Domande singole in formato CSV
+│   └── test_results.csv       # Risultati dei test eseguiti
+├── pages/                     # Script delle pagine Streamlit
+│   ├── api_configurazione.py  # Configurazione delle API
+│   ├── esecuzione_test.py     # Esecuzione dei test sulle domande
+│   ├── gestione_domande.py    # Gestione del database delle domande
+│   ├── gestione_set.py        # Gestione dei set di domande
+│   ├── valutazione_bm25.py    # Valutazione risultati con algoritmo BM25
+│   └── visualizza_risultati.py# Visualizzazione dei risultati dei test
+├── utils/                     # Script di utilità
+│   ├── api_utils.py           # Utility per la configurazione delle API
+│   ├── bm25.py                # Algoritmo di ranking BM25
+│   ├── data_utils.py          # Utility per la gestione dei dati
+│   ├── openai_utils.py        # Utility per l'interazione con OpenAI
+│   └── ui_utils.py            # Utility per l'interfaccia utente Streamlit
+

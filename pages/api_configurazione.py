@@ -15,7 +15,7 @@ from utils.data_utils import load_api_presets, save_api_presets, initialize_data
 initialize_data()
 
 add_page_header(
-    "Gestione Preset API",
+    "Configurazione API per LLM",
     icon="⚙️",
     description="Crea, visualizza, testa ed elimina i preset di configurazione API per LLM."
 )
