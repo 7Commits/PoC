@@ -352,7 +352,6 @@ pages = {
     "Gestione Set di Domande": "pages/gestione_set.py",
     "Configurazione API": "pages/api_configurazione.py",
     "Esecuzione Test": "pages/esecuzione_test.py",
-    "Valutazione BM25": "pages/valutazione_bm25.py",
     "Visualizzazione Risultati": "pages/visualizza_risultati.py"
 }
 

@@ -7,9 +7,7 @@ import pandas as pd
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from utils.openai_utils import (
-    test_api_connection, DEFAULT_MODEL, DEFAULT_ENDPOINT,
-    OPENAI_MODELS, ANTHROPIC_MODELS, 
-    get_available_models_for_endpoint
+    test_api_connection, DEFAULT_MODEL, DEFAULT_ENDPOINT
 )
 from utils.ui_utils import add_page_header, add_section_title, create_card
 from utils.data_utils import load_api_presets, save_api_presets, initialize_data
@@ -31,12 +29,6 @@ if "preset_form_data" not in st.session_state: st.session_state.preset_form_data
 if "api_presets" not in st.session_state:
     st.session_state.api_presets = load_api_presets()
 
-ENDPOINT_OPTIONS = {
-    "OpenAI": DEFAULT_ENDPOINT,
-    "Anthropic": "https://api.anthropic.com/v1", # Esempio, potrebbe variare
-    # Aggiungi altri provider predefiniti qui
-    "Personalizzato": "custom" 
-}
 
 # Funzioni di callback per i pulsanti del form
 def start_new_preset_edit():
@@ -44,23 +36,12 @@ def start_new_preset_edit():
     st.session_state.current_preset_edit_id = None # Indica nuovo preset
     st.session_state.preset_form_data = {
         "name": "",
-        "provider_name": list(ENDPOINT_OPTIONS.keys())[0],
-        "endpoint": list(ENDPOINT_OPTIONS.values())[0],
+        "endpoint": DEFAULT_ENDPOINT,
         "api_key": "",
         "model": DEFAULT_MODEL,
         "temperature": 0.0,
         "max_tokens": 1000
     }
-    # Aggiorna i modelli disponibili per il provider di default
-    st.session_state.preset_form_data["available_models"] = get_available_models_for_endpoint(
-        st.session_state.preset_form_data["provider_name"],
-        st.session_state.preset_form_data["endpoint"],
-        st.session_state.preset_form_data["api_key"]
-    )
-    if st.session_state.preset_form_data["available_models"]:
-         st.session_state.preset_form_data["model"] = st.session_state.preset_form_data["available_models"][0]
-    else:
-        st.session_state.preset_form_data["model"] = DEFAULT_MODEL
 
 def start_existing_preset_edit(preset_id):
     preset_to_edit = st.session_state.api_presets[st.session_state.api_presets["id"] == preset_id].iloc[0].to_dict()
@@ -70,14 +51,8 @@ def start_existing_preset_edit(preset_id):
     # Assicura che i campi numerici siano del tipo corretto per gli slider/number_input
     st.session_state.preset_form_data["temperature"] = float(st.session_state.preset_form_data.get("temperature", 0.0))
     st.session_state.preset_form_data["max_tokens"] = int(st.session_state.preset_form_data.get("max_tokens", 1000))
-    st.session_state.preset_form_data["available_models"] = get_available_models_for_endpoint(
-        st.session_state.preset_form_data["provider_name"],
-        st.session_state.preset_form_data["endpoint"],
-        st.session_state.preset_form_data["api_key"]
-    )
-    # Se il modello salvato non è nella lista, mantienilo ma avvisa o permetti di cambiarlo
-    if st.session_state.preset_form_data["model"] not in st.session_state.preset_form_data["available_models"]:
-        st.session_state.preset_form_data["available_models"].append(st.session_state.preset_form_data["model"]) # Aggiungilo per permettere la selezione
+    if "endpoint" not in st.session_state.preset_form_data:
+        st.session_state.preset_form_data["endpoint"] = DEFAULT_ENDPOINT
 
 def cancel_preset_edit():
     st.session_state.editing_preset = False
@@ -85,8 +60,10 @@ def cancel_preset_edit():
     st.session_state.preset_form_data = {}
 
 def save_preset_from_form():
-    form_data = st.session_state.preset_form_data
-    preset_name = form_data.get("name", "").strip()
+    # Ottiene direttamente il valore dal campo input tramite session_state
+    form_data = st.session_state.preset_form_data.copy()
+    preset_name = st.session_state.get("preset_name", "").strip()
+    
     if not preset_name:
         st.error("Il nome del preset non può essere vuoto.")
         return
@@ -107,9 +84,8 @@ def save_preset_from_form():
 
     # Prepara i dati del preset da salvare
     preset_data_to_save = {
-        "name": preset_name,
-        "provider_name": form_data.get("provider_name"),
-        "endpoint": form_data.get("endpoint_to_save", form_data.get("endpoint")), # Usa endpoint_to_save se presente
+        "name": preset_name,  # Usa il valore validato
+        "endpoint": form_data.get("endpoint"),
         "api_key": form_data.get("api_key"),
         "model": form_data.get("model"),
         "temperature": float(form_data.get("temperature", 0.0)),
@@ -147,81 +123,59 @@ if st.session_state.editing_preset:
     form_data = st.session_state.preset_form_data
     
     with st.form(key="preset_form"):
-        form_data["name"] = st.text_input("Nome del Preset", value=form_data.get("name", ""), help="Un nome univoco per questo preset.")
-        
-        selected_provider = st.selectbox(
-            "Provider API", 
-            options=list(ENDPOINT_OPTIONS.keys()), 
-            index=list(ENDPOINT_OPTIONS.keys()).index(form_data.get("provider_name", list(ENDPOINT_OPTIONS.keys())[0])),
-            key="form_provider_select"
+        # Usa un key specifico per il campo nome e aggiorna il form_data
+        form_data["name"] = st.text_input(
+            "Nome del Preset", 
+            value=form_data.get("name", ""),
+            key="preset_name",  # Key esplicita per il campo nome
+            help="Un nome univoco per questo preset."
         )
-        form_data["provider_name"] = selected_provider
         
-        # Gestione Endpoint
-        if selected_provider == "Personalizzato":
-            form_data["endpoint"] = st.text_input(
-                "Endpoint API Personalizzato", 
-                value=form_data.get("endpoint", ""), 
-                placeholder="https://api.example.com/v1",
-                key="form_custom_endpoint_input"
-            )
-            form_data["endpoint_to_save"] = form_data["endpoint"] # Salva l'URL personalizzato
-        else:
-            form_data["endpoint"] = ENDPOINT_OPTIONS[selected_provider]
-            form_data["endpoint_to_save"] = form_data["endpoint"] # Salva l'URL del provider
-            st.text_input("Endpoint API", value=form_data["endpoint"], disabled=True)
-
-        form_data["api_key"] = st.text_input("Chiave API", value=form_data.get("api_key", ""), type="password", help="La tua chiave API per il provider selezionato.")
-        
-        # Selezione Modello
-        # Aggiorna i modelli disponibili quando il provider, l'endpoint o la chiave cambiano
-        # Questo richiede di mettere la logica di recupero modelli qui o in un callback.
-        # Per semplicità, aggiorniamo quando cambia il provider.
-        # Una soluzione più robusta potrebbe usare on_change sui campi rilevanti.
-        
-        # Per ora, assumiamo che l'utente inserisca il modello se personalizzato o se non trovato.
-        # Una gestione più avanzata richiederebbe una chiamata API per elencare i modelli.
-        
-        current_models = get_available_models_for_endpoint(
-            form_data["provider_name"], 
-            form_data.get("endpoint_to_save", form_data.get("endpoint")),
-            form_data["api_key"]
+        # Campo chiave API con key esplicita
+        form_data["api_key"] = st.text_input(
+            "Chiave API", 
+            value=form_data.get("api_key", ""), 
+            type="password", 
+            key="preset_api_key",  # Key esplicita per la chiave API
+            help="La tua chiave API per il provider selezionato."
         )
-        form_data["available_models"] = current_models
         
-        # Se il modello attuale non è nella lista, aggiungilo temporaneamente
-        current_model_in_form = form_data.get("model", DEFAULT_MODEL)
-        if current_model_in_form not in current_models:
-            current_models.insert(0, current_model_in_form) # Inseriscilo all'inizio per visibilità
+        # Campo endpoint con key esplicita
+        form_data["endpoint"] = st.text_input(
+            "Provider Endpoint", 
+            value=form_data.get("endpoint", DEFAULT_ENDPOINT),
+            placeholder="https://api.openai.com/v1",
+            key="preset_endpoint",  # Key esplicita per l'endpoint
+            help="Inserisci l'endpoint del provider API (es: https://api.openai.com/v1)"
+        )
         
-        try:
-            model_select_index = current_models.index(current_model_in_form)
-        except ValueError:
-            model_select_index = 0 # Default al primo se non trovato
-            if current_models: form_data["model"] = current_models[0]
-
-        form_data["model"] = st.selectbox(
+        # Modello sempre personalizzabile
+        form_data["model"] = st.text_input(
             "Modello", 
-            options=current_models, 
-            index=model_select_index,
-            help="Seleziona un modello o inserisci un nome modello personalizzato."
-        ) 
-        # Aggiungere un text_input per modello personalizzato se si vuole più flessibilità
-        # if st.checkbox("Usa nome modello personalizzato", key="form_use_custom_model_name"):
-        #     form_data["model"] = st.text_input("Nome Modello Personalizzato", value=form_data.get("model",""))
+            value=form_data.get("model", DEFAULT_MODEL),
+            placeholder="gpt-4o",
+            key="preset_model",  # Key esplicita per il modello
+            help="Inserisci il nome del modello (es: gpt-4o, claude-3-sonnet, ecc.)"
+        )
 
         form_data["temperature"] = st.slider("Temperatura", 0.0, 2.0, float(form_data.get("temperature", 0.0)), 0.1)
         form_data["max_tokens"] = st.number_input("Max Tokens", min_value=50, max_value=8000, value=int(form_data.get("max_tokens", 1000)), step=50)
         
+        # Campo Test Connessione e pulsanti di salvataggio/annullamento
         # Pulsante Test Connessione
         if st.form_submit_button("⚡ Testa Connessione API"):
+            # Usa direttamente i valori dal session_state per il test
+            api_key_to_test = st.session_state.get("preset_api_key", "")
+            endpoint_to_test = st.session_state.get("preset_endpoint", DEFAULT_ENDPOINT)
+            model_to_test = st.session_state.get("preset_model", DEFAULT_MODEL)
+            
             with st.spinner("Test in corso..."):
                 success, message = test_api_connection(
-                    api_key=form_data["api_key"],
-                    endpoint=form_data.get("endpoint_to_save", form_data.get("endpoint")),
-                    model=form_data["model"],
-                    temperature=form_data["temperature"],
-                    max_tokens=form_data["max_tokens"]
+                    api_key=api_key_to_test,
+                    endpoint=endpoint_to_test,
+                    model=model_to_test,
+                    temperature=form_data.get("temperature", 0.0),
+                    max_tokens=form_data.get("max_tokens", 1000)
                 )
                 if success:
                     st.success(message)
@@ -249,7 +203,7 @@ else:
                 st.markdown(f"#### {preset['name']}")
                 cols_preset_details = st.columns([3, 1, 1])
                 with cols_preset_details[0]:
-                    st.caption(f"Provider: {preset.get('provider_name', 'N/A')} | Modello: {preset.get('model', 'N/A')}")
+                    st.caption(f"Modello: {preset.get('model', 'N/A')}")
                     st.caption(f"Endpoint: {preset.get('endpoint', 'N/A')}")
                 with cols_preset_details[1]:
                     if st.button("✏️ Modifica", key=f"edit_{preset['id']}", on_click=start_existing_preset_edit, args=(preset['id'],), use_container_width=True):
@@ -271,3 +225,14 @@ if "preset_saved_message" in st.session_state:
 if "preset_deleted_message" in st.session_state:
     st.success(st.session_state.preset_deleted_message)
     del st.session_state.preset_deleted_message
+
+# Seleziona preset per la generazione di risposta
+preset_names_to_id = {preset['name']: preset['id'] for _, preset in st.session_state.api_presets.iterrows()}
+preset_display_names = list(preset_names_to_id.keys())
+
+if not preset_display_names:  # Aggiunta verifica per evitare riferimenti a variabile non definita
+    st.error("Nessun preset API configurato. Vai alla pagina 'Gestione Preset API' per crearne almeno uno prima di eseguire i test.")
+    st.stop()
+
+# Seleziona preset per valutazione (se presente)
+# Rimosso dalla pagina di configurazione API - appartiene alla pagina di esecuzione test

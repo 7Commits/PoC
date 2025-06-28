@@ -12,35 +12,38 @@ from utils.data_utils import (
     load_questions, save_questions, add_question, update_question,
     delete_question, import_questions_from_file
 )
-from utils.ui_utils import add_page_header, add_section_title, create_card, create_metrics_container
+from utils.ui_utils import add_page_header, add_section_title, create_card
 
-# === CALLBACK FUNCTIONS ===
+
+# === FUNZIONI DI CALLBACK ===
 
 def save_question_callback(question_id, edited_question, edited_answer, edited_category):
-    """回调函数：保存问题修改"""
+    """Funzione di callback: salva le modifiche alla domanda"""
     if update_question(question_id, testo_domanda=edited_question, risposta_prevista=edited_answer,
                        categoria=edited_category):
         st.session_state.save_success_message = "Domanda aggiornata con successo!"
         st.session_state.save_success = True
-        # 更新session state中的questions以反映修改
+        # Aggiorna le domande in session_state per riflettere la modifica
         st.session_state.questions.loc[st.session_state.questions['id'] == question_id, 'categoria'] = edited_category
         st.session_state.trigger_rerun = True
     else:
         st.session_state.save_error_message = "Impossibile aggiornare la domanda."
         st.session_state.save_error = True
 
+
 def delete_question_callback(question_id):
-    """回调函数：删除问题"""
+    """Funzione di callback: elimina la domanda"""
     delete_question(question_id)
     st.session_state.delete_success_message = "Domanda eliminata con successo!"
     st.session_state.delete_success = True
     st.session_state.trigger_rerun = True
 
+
 def import_questions_callback():
-    """回调函数：导入问题"""
+    """Funzione di callback: importa le domande"""
     if 'uploaded_file_content' in st.session_state and st.session_state.uploaded_file_content is not None:
         success, message = import_questions_from_file(st.session_state.uploaded_file_content)
-        
+
         if success:
             st.session_state.import_success_message = message
             st.session_state.import_success = True
@@ -49,7 +52,29 @@ def import_questions_callback():
             st.session_state.import_error_message = message
             st.session_state.import_error = True
 
-# === 初始化状态变量 ===
+
+# === FUNZIONI DI DIALOGO ===
+
+@st.dialog("Conferma Eliminazione")
+def confirm_delete_question_dialog(question_id, question_text):
+    """Dialogo di conferma per l'eliminazione della domanda"""
+    st.write(f"Sei sicuro di voler eliminare questa domanda?")
+    st.write(f"**Domanda:** {question_text[:100]}...")
+    st.warning("Questa azione non può essere annullata.")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Sì, Elimina", type="primary", use_container_width=True):
+            delete_question_callback(question_id)
+            st.rerun()
+
+    with col2:
+        if st.button("No, Annulla", use_container_width=True):
+            st.rerun()
+
+
+# === Inizializzazione delle variabili di stato ===
 if 'save_success' not in st.session_state:
     st.session_state.save_success = False
 if 'save_error' not in st.session_state:
@@ -63,12 +88,12 @@ if 'import_error' not in st.session_state:
 if 'trigger_rerun' not in st.session_state:
     st.session_state.trigger_rerun = False
 
-# 处理rerun逻辑
+# Gestisce la logica di rerun
 if st.session_state.trigger_rerun:
     st.session_state.trigger_rerun = False
     st.rerun()
 
-# 显示状态消息
+# Mostra i messaggi di stato
 if st.session_state.save_success:
     st.success(st.session_state.get('save_success_message', 'Operazione completata con successo!'))
     st.session_state.save_success = False
@@ -162,19 +187,19 @@ with tabs[0]:
                     with col2:
                         # Pulsante Aggiorna con callback
                         st.button(
-                            "Salva Modifiche", 
+                            "Salva Modifiche",
                             key=f"save_{row['id']}",
                             on_click=save_question_callback,
                             args=(row['id'], edited_question, edited_answer, edited_category)
                         )
 
-                        # Pulsante Elimina con callback
-                        st.button(
-                            "Elimina Domanda", 
-                            key=f"delete_{row['id']}",
-                            on_click=delete_question_callback,
-                            args=(row['id'],)
-                        )
+                        # Pulsante Elimina con dialog di conferma
+                        if st.button(
+                                "Elimina Domanda",
+                                key=f"delete_{row['id']}",
+                                type="secondary"
+                        ):
+                            confirm_delete_question_dialog(row['id'], row['domanda'])
         else:
             st.info(f"Nessuna domanda trovata per la categoria '{selected_category}'.")
 
@@ -247,10 +272,10 @@ with tabs[2]:
     uploaded_file = st.file_uploader("Scegli un file", type=["csv", "json"])
 
     if uploaded_file is not None:
-        # 将文件存储到session state以供回调函数使用
+        # Salva il file in session_state per l'uso da parte della callback
         st.session_state.uploaded_file_content = uploaded_file
-        
-        # 使用回调函数的按钮
+
+        # Pulsante che utilizza la funzione di callback
         st.button(
             "Importa Domande",
             key="import_questions_btn",
