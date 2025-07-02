@@ -66,11 +66,9 @@ PoC/
 │   ├── esecuzione_test.py     # Esecuzione dei test sulle domande
 │   ├── gestione_domande.py    # Gestione del database delle domande
 │   ├── gestione_set.py        # Gestione dei set di domande
-│   ├── valutazione_bm25.py    # Valutazione risultati con algoritmo BM25
 │   └── visualizza_risultati.py# Visualizzazione dei risultati dei test
 ├── utils/                     # Script di utilità
 │   ├── api_utils.py           # Utility per la configurazione delle API
-│   ├── bm25.py                # Algoritmo di ranking BM25
 │   ├── data_utils.py          # Utility per la gestione dei dati
 │   ├── openai_utils.py        # Utility per l'interazione con OpenAI
 │   └── ui_utils.py            # Utility per l'interfaccia utente Streamlit
