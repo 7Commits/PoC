@@ -1,69 +1,33 @@
 import os
 import pandas as pd
 import streamlit as st
-from pathlib import Path
 import uuid
 import json
+from sqlalchemy import text
 
-# Crea percorsi di directory
-DATA_DIR = Path("data")
-QUESTIONS_FILE = DATA_DIR / "questions.csv"
-QUESTION_SETS_FILE = DATA_DIR / "question_sets.csv"
-RESULTS_FILE = DATA_DIR / "test_results.csv"
-API_PRESETS_FILE = DATA_DIR / "api_presets.csv" # Nuovo file per i preset API
+from .db_utils import get_engine, init_db
 
 def initialize_data():
-    """Inizializza le directory e i file di dati se non esistono."""
-    if not DATA_DIR.exists():
-        DATA_DIR.mkdir(parents=True)
-
-    if not QUESTIONS_FILE.exists():
-        questions_df = pd.DataFrame({
-            'id': pd.Series(dtype='str'),
-            'question': pd.Series(dtype='str'),
-            'expected_answer': pd.Series(dtype='str'),
-            'category': pd.Series(dtype='str')
-        })
-        questions_df.to_csv(QUESTIONS_FILE, index=False)
-
-    if not QUESTION_SETS_FILE.exists():
-        sets_df = pd.DataFrame({
-            'id': pd.Series(dtype='str'),
-            'name': pd.Series(dtype='str'),
-            'questions': pd.Series(dtype='object')
-        })
-        sets_df.to_csv(QUESTION_SETS_FILE, index=False)
-
-    if not RESULTS_FILE.exists():
-        results_df = pd.DataFrame({
-            'id': pd.Series(dtype='str'),
-            'set_id': pd.Series(dtype='str'),
-            'timestamp': pd.Series(dtype='str'),
-            'results': pd.Series(dtype='object')
-        })
-        results_df.to_csv(RESULTS_FILE, index=False)
+    """Inizializza il database creando le tabelle."""
+    init_db()
 
 
 def load_api_presets():
-    """Carica i preset API dal file CSV."""
-    if API_PRESETS_FILE.exists():
-        try:
-            df = pd.read_csv(API_PRESETS_FILE)
-            # Assicura i tipi di dati corretti, specialmente per i numerici
-            df['id'] = df['id'].astype(str)
-            df['name'] = df['name'].astype(str).fillna("")
-            df['provider_name'] = df['provider_name'].astype(str).fillna("")
-            df['endpoint'] = df['endpoint'].astype(str).fillna("")
-            df['api_key'] = df['api_key'].astype(str).fillna("")
-            df['model'] = df['model'].astype(str).fillna("")
-            df['temperature'] = pd.to_numeric(df['temperature'], errors='coerce').fillna(0.0)
-            df['max_tokens'] = pd.to_numeric(df['max_tokens'], errors='coerce').fillna(1000).astype(int)
-            return df
-        except pd.errors.EmptyDataError:
-            pass # Restituisce DataFrame vuoto sotto
-        except Exception as e:
-            st.error(f"Errore durante la lettura di {API_PRESETS_FILE}: {e}")
-    
+    """Carica i preset API dal database."""
+    try:
+        df = pd.read_sql("SELECT * FROM api_presets", get_engine())
+        df['id'] = df['id'].astype(str)
+        df['name'] = df['name'].astype(str).fillna("")
+        df['provider_name'] = df['provider_name'].astype(str).fillna("")
+        df['endpoint'] = df['endpoint'].astype(str).fillna("")
+        df['api_key'] = df['api_key'].astype(str).fillna("")
+        df['model'] = df['model'].astype(str).fillna("")
+        df['temperature'] = pd.to_numeric(df['temperature'], errors='coerce').fillna(0.0)
+        df['max_tokens'] = pd.to_numeric(df['max_tokens'], errors='coerce').fillna(1000).astype(int)
+        return df
+    except Exception as e:
+        st.error(f"Errore durante la lettura della tabella api_presets: {e}")
+
     return pd.DataFrame({
         'id': pd.Series(dtype='str'),
         'name': pd.Series(dtype='str'),
@@ -76,8 +40,7 @@ def load_api_presets():
     })
 
 def save_api_presets(presets_df):
-    """Salva i preset API nel file CSV."""
-    # Assicura che le colonne siano nell'ordine desiderato e abbiano il tipo corretto
+    """Salva i preset API nel database."""
     expected_columns = ['id', 'name', 'provider_name', 'endpoint', 'api_key', 'model', 'temperature', 'max_tokens']
     df_to_save = pd.DataFrame(columns=expected_columns)
 
@@ -97,36 +60,59 @@ def save_api_presets(presets_df):
                 df_to_save[col] = pd.Series(dtype='int')
             else:
                 df_to_save[col] = pd.Series(dtype='str')
+    engine = get_engine()
+    with engine.begin() as conn:
+        existing_ids = pd.read_sql('SELECT id FROM api_presets', conn)['id'].astype(str).tolist()
+        incoming_ids = df_to_save['id'].astype(str).tolist()
 
-    df_to_save.to_csv(API_PRESETS_FILE, index=False)
-    if 'api_presets' in st.session_state: # Aggiorna lo stato della sessione se esiste
-        st.session_state.api_presets = df_to_save.copy() # Salva una copia per evitare modifiche per riferimento
+        # Elimina i preset rimossi
+        ids_to_delete = set(existing_ids) - set(incoming_ids)
+        for del_id in ids_to_delete:
+            conn.execute(text('DELETE FROM api_presets WHERE id = :id'), {'id': del_id})
+
+        # Inserisci o aggiorna i preset forniti
+        for _, row in df_to_save.iterrows():
+            params = row.to_dict()
+            if row['id'] in existing_ids:
+                conn.execute(
+                    text('''UPDATE api_presets SET name=:name, provider_name=:provider_name,
+                         endpoint=:endpoint, api_key=:api_key, model=:model,
+                         temperature=:temperature, max_tokens=:max_tokens WHERE id=:id'''),
+                    params
+                )
+            else:
+                conn.execute(
+                    text('''INSERT INTO api_presets
+                         (id, name, provider_name, endpoint, api_key, model, temperature, max_tokens)
+                         VALUES (:id, :name, :provider_name, :endpoint, :api_key, :model, :temperature, :max_tokens)'''),
+                    params
+                )
+    if 'api_presets' in st.session_state:
+        st.session_state.api_presets = df_to_save.copy()
 
 # --- Funzioni esistenti (accorciate per brevità, nessuna modifica qui) --- 
 
 def load_questions():
-    """Carica le domande dal file CSV, gestendo la migrazione dei nomi delle colonne e l'aggiunta di 'categoria'."""
-    if QUESTIONS_FILE.exists():
-        try:
-            df = pd.read_csv(QUESTIONS_FILE)
-            if 'question' in df.columns and 'domanda' not in df.columns:
-                df.rename(columns={'question': 'domanda'}, inplace=True)
-            if 'expected_answer' in df.columns and 'risposta_attesa' not in df.columns:
-                df.rename(columns={'expected_answer': 'risposta_attesa'}, inplace=True)
-            if 'categoria' not in df.columns:
-                df['categoria'] = ""
-            df['id'] = df['id'].astype(str)
-            df['domanda'] = df['domanda'].astype(str).fillna("")
-            df['risposta_attesa'] = df['risposta_attesa'].astype(str).fillna("")
-            df['categoria'] = df['categoria'].astype(str).fillna("")
-            return df
-        except pd.errors.EmptyDataError:
-            pass
-        except Exception as e:
-            st.error(f"Errore durante la lettura di {QUESTIONS_FILE}: {e}")
+    """Carica le domande dal database."""
+    try:
+        df = pd.read_sql("SELECT * FROM questions", get_engine())
+        if 'question' in df.columns and 'domanda' not in df.columns:
+            df.rename(columns={'question': 'domanda'}, inplace=True)
+        if 'expected_answer' in df.columns and 'risposta_attesa' not in df.columns:
+            df.rename(columns={'expected_answer': 'risposta_attesa'}, inplace=True)
+        if 'categoria' not in df.columns:
+            df['categoria'] = ""
+        df['id'] = df['id'].astype(str)
+        df['domanda'] = df['domanda'].astype(str).fillna("")
+        df['risposta_attesa'] = df['risposta_attesa'].astype(str).fillna("")
+        df['categoria'] = df['categoria'].astype(str).fillna("")
+        return df
+    except Exception as e:
+        st.error(f"Errore durante la lettura della tabella questions: {e}")
     return pd.DataFrame({'id': pd.Series(dtype='str'), 'domanda': pd.Series(dtype='str'), 'risposta_attesa': pd.Series(dtype='str'), 'categoria': pd.Series(dtype='str')})
 
 def save_questions(questions_df):
+    """Sincronizza le domande con il database usando INSERT/UPDATE/DELETE."""
     expected_columns = ['id', 'domanda', 'risposta_attesa', 'categoria']
     df_to_save = pd.DataFrame(columns=expected_columns)
     for col in expected_columns:
@@ -134,111 +120,270 @@ def save_questions(questions_df):
             df_to_save[col] = questions_df[col].astype(str)
         else:
             df_to_save[col] = pd.Series(dtype='str')
-    df_to_save.to_csv(QUESTIONS_FILE, index=False)
-    st.session_state.questions = df_to_save
+    engine = get_engine()
+    with engine.begin() as conn:
+        existing = pd.read_sql('SELECT id FROM questions', conn)
+        existing_ids = existing['id'].astype(str).tolist()
+        incoming_ids = df_to_save['id'].astype(str).tolist()
 
-def load_question_sets():
-    if QUESTION_SETS_FILE.exists():
-        try:
-            sets_df = pd.read_csv(QUESTION_SETS_FILE)
-            if not sets_df.empty and 'questions' in sets_df.columns:
-                sets_df['questions'] = sets_df['questions'].apply(lambda x: json.loads(x) if isinstance(x, str) and x.startswith('[') else ([] if pd.isna(x) else x))
+        ids_to_delete = set(existing_ids) - set(incoming_ids)
+        for qid in ids_to_delete:
+            conn.execute(text('DELETE FROM questions WHERE id = :id'), {'id': qid})
+
+        for _, row in df_to_save.iterrows():
+            params = row.to_dict()
+            if row['id'] in existing_ids:
+                conn.execute(
+                    text('''UPDATE questions SET domanda=:domanda, risposta_attesa=:risposta_attesa,
+                         categoria=:categoria WHERE id=:id'''),
+                    params
+                )
             else:
-                sets_df = pd.DataFrame({'id': pd.Series(dtype='str'), 'name': pd.Series(dtype='str'), 'questions': pd.Series(dtype='object')})
-            sets_df['id'] = sets_df['id'].astype(str)
-            sets_df['name'] = sets_df['name'].astype(str).fillna("")
-            sets_df['questions'] = sets_df['questions'].apply(lambda x: x if isinstance(x, list) else [])
-            return sets_df
-        except pd.errors.EmptyDataError:
-            pass
-        except Exception as e:
-            st.error(f"Errore durante la lettura di {QUESTION_SETS_FILE}: {e}")
+                conn.execute(
+                    text('''INSERT INTO questions (id, domanda, risposta_attesa, categoria)
+                         VALUES (:id, :domanda, :risposta_attesa, :categoria)'''),
+                    params
+                )
+    st.session_state.questions = df_to_save.copy()
+def load_question_sets():
+    """Carica i set di domande dal database insieme alle associazioni."""
+    try:
+        engine = get_engine()
+        sets_df = pd.read_sql("SELECT id, name FROM question_sets", engine)
+        rel_df = pd.read_sql("SELECT set_id, question_id FROM question_set_questions", engine)
+
+        if sets_df.empty:
+            return pd.DataFrame({'id': pd.Series(dtype='str'), 'name': pd.Series(dtype='str'), 'questions': pd.Series(dtype='object')})
+
+        sets_df['id'] = sets_df['id'].astype(str)
+        sets_df['name'] = sets_df['name'].astype(str).fillna("")
+        rel_df['set_id'] = rel_df['set_id'].astype(str)
+        rel_df['question_id'] = rel_df['question_id'].astype(str)
+
+        sets_df['questions'] = sets_df['id'].apply(lambda sid: rel_df[rel_df['set_id'] == sid]['question_id'].tolist())
+        return sets_df
+    except Exception as e:
+        st.error(f"Errore durante la lettura della tabella question_sets: {e}")
     return pd.DataFrame({'id': pd.Series(dtype='str'), 'name': pd.Series(dtype='str'), 'questions': pd.Series(dtype='object')})
 
 def save_question_sets(sets_df):
+    """Sincronizza i set di domande con il database e le relative associazioni."""
     sets_df_to_save = sets_df.copy()
-    if not sets_df_to_save.empty and 'questions' in sets_df_to_save.columns:
-        sets_df_to_save['questions'] = sets_df_to_save['questions'].apply(lambda x: json.dumps(x) if isinstance(x, list) else "[]")
-    sets_df_to_save.to_csv(QUESTION_SETS_FILE, index=False)
-    st.session_state.question_sets = sets_df
+    engine = get_engine()
+    with engine.begin() as conn:
+        existing = pd.read_sql('SELECT id FROM question_sets', conn)
+        existing_ids = existing['id'].astype(str).tolist()
+        incoming_ids = sets_df_to_save['id'].astype(str).tolist()
+
+        ids_to_delete = set(existing_ids) - set(incoming_ids)
+        for sid in ids_to_delete:
+            conn.execute(text('DELETE FROM question_set_questions WHERE set_id = :id'), {'id': sid})
+            conn.execute(text('DELETE FROM question_sets WHERE id = :id'), {'id': sid})
+
+        for _, row in sets_df_to_save.iterrows():
+            set_id = str(row['id'])
+            name = str(row.get('name', ''))
+            questions = row.get('questions', [])
+            if set_id in existing_ids:
+                conn.execute(text('UPDATE question_sets SET name=:name WHERE id=:id'), {'id': set_id, 'name': name})
+            else:
+                conn.execute(text('INSERT INTO question_sets (id, name) VALUES (:id, :name)'), {'id': set_id, 'name': name})
+
+            if questions is not None:
+                existing_q = conn.execute(text('SELECT question_id FROM question_set_questions WHERE set_id=:sid'), {'sid': set_id}).fetchall()
+                existing_q_ids = [r[0] for r in existing_q]
+                new_q_ids = [str(q) for q in questions]
+
+                for qid in set(existing_q_ids) - set(new_q_ids):
+                    conn.execute(text('DELETE FROM question_set_questions WHERE set_id=:sid AND question_id=:qid'), {'sid': set_id, 'qid': qid})
+                for qid in set(new_q_ids) - set(existing_q_ids):
+                    conn.execute(text('INSERT INTO question_set_questions (set_id, question_id) VALUES (:sid, :qid)'), {'sid': set_id, 'qid': qid})
+
+    st.session_state.question_sets = sets_df.copy()
 
 def load_results():
-    if RESULTS_FILE.exists():
-        try:
-            results_df = pd.read_csv(RESULTS_FILE)
-            if not results_df.empty and 'results' in results_df.columns:
-                results_df['results'] = results_df['results'].apply(lambda x: json.loads(x) if isinstance(x, str) and x.startswith('{') else ({} if pd.isna(x) else x))
-            else:
-                results_df = pd.DataFrame({'id': pd.Series(dtype='str'), 'set_id': pd.Series(dtype='str'), 'timestamp': pd.Series(dtype='str'), 'results': pd.Series(dtype='object')})
-            results_df['id'] = results_df['id'].astype(str)
-            results_df['set_id'] = results_df['set_id'].astype(str).fillna("")
-            results_df['timestamp'] = results_df['timestamp'].astype(str).fillna("")
-            results_df['results'] = results_df['results'].apply(lambda x: x if isinstance(x, dict) else {})
-            return results_df
-        except pd.errors.EmptyDataError:
-            pass
-        except Exception as e:
-            st.error(f"Errore durante la lettura di {RESULTS_FILE}: {e}")
+    """Carica i risultati dei test dal database."""
+    try:
+        results_df = pd.read_sql("SELECT * FROM test_results", get_engine())
+        if not results_df.empty and 'results' in results_df.columns:
+            results_df['results'] = results_df['results'].apply(lambda x: json.loads(x) if isinstance(x, str) and x.startswith('{') else ({} if pd.isna(x) else x))
+        else:
+            results_df = pd.DataFrame({'id': pd.Series(dtype='str'), 'set_id': pd.Series(dtype='str'), 'timestamp': pd.Series(dtype='str'), 'results': pd.Series(dtype='object')})
+        results_df['id'] = results_df['id'].astype(str)
+        results_df['set_id'] = results_df['set_id'].astype(str).fillna("")
+        results_df['timestamp'] = results_df['timestamp'].astype(str).fillna("")
+        results_df['results'] = results_df['results'].apply(lambda x: x if isinstance(x, dict) else {})
+        return results_df
+    except Exception as e:
+        st.error(f"Errore durante la lettura della tabella test_results: {e}")
     return pd.DataFrame({'id': pd.Series(dtype='str'), 'set_id': pd.Series(dtype='str'), 'timestamp': pd.Series(dtype='str'), 'results': pd.Series(dtype='object')})
 
 def save_results(results_df):
+    """Sincronizza i risultati dei test con il database."""
     results_df_to_save = results_df.copy()
     if not results_df_to_save.empty and 'results' in results_df_to_save.columns:
         results_df_to_save['results'] = results_df_to_save['results'].apply(lambda x: json.dumps(x) if isinstance(x, dict) else "{}")
-    results_df_to_save.to_csv(RESULTS_FILE, index=False)
-    st.session_state.results = results_df
+    engine = get_engine()
+    with engine.begin() as conn:
+        existing = pd.read_sql('SELECT id FROM test_results', conn)
+        existing_ids = existing['id'].astype(str).tolist()
+        incoming_ids = results_df_to_save['id'].astype(str).tolist()
 
-def add_question(testo_domanda, risposta_prevista, categoria=""):
-    questions_df = st.session_state.questions.copy()
-    new_question_data = {'id': str(uuid.uuid4()), 'domanda': str(testo_domanda), 'risposta_attesa': str(risposta_prevista), 'categoria': str(categoria)}
-    new_question_df = pd.DataFrame([new_question_data])
-    questions_df = pd.concat([questions_df, new_question_df], ignore_index=True)
-    save_questions(questions_df)
-    return new_question_data['id']
+        ids_to_delete = set(existing_ids) - set(incoming_ids)
+        for rid in ids_to_delete:
+            conn.execute(text('DELETE FROM test_results WHERE id = :id'), {'id': rid})
+
+        for _, row in results_df_to_save.iterrows():
+            params = row.to_dict()
+            if row['id'] in existing_ids:
+                conn.execute(
+                    text('''UPDATE test_results SET set_id=:set_id, timestamp=:timestamp, results=:results WHERE id=:id'''),
+                    params
+                )
+            else:
+                conn.execute(
+                    text('''INSERT INTO test_results (id, set_id, timestamp, results) VALUES (:id, :set_id, :timestamp, :results)'''),
+                    params
+                )
+    st.session_state.results = results_df.copy()
+
+def add_question(testo_domanda, risposta_prevista, categoria="", question_id=None):
+    """Inserisce una nuova domanda nel database."""
+    if 'questions' not in st.session_state:
+        st.session_state.questions = load_questions()
+
+    new_id = question_id or str(uuid.uuid4())
+    new_question_data = {
+        'id': new_id,
+        'domanda': str(testo_domanda),
+        'risposta_attesa': str(risposta_prevista),
+        'categoria': str(categoria)
+    }
+
+    engine = get_engine()
+    with engine.begin() as conn:
+        conn.execute(
+            text('''INSERT INTO questions (id, domanda, risposta_attesa, categoria)
+                 VALUES (:id, :domanda, :risposta_attesa, :categoria)'''),
+            new_question_data
+        )
+
+    new_df = pd.DataFrame([new_question_data])
+    st.session_state.questions = pd.concat([st.session_state.questions, new_df], ignore_index=True)
+    return new_id
 
 def update_question(question_id, testo_domanda=None, risposta_prevista=None, categoria=None):
+    """Aggiorna i campi di una domanda nel database."""
+    if 'questions' not in st.session_state:
+        st.session_state.questions = load_questions()
+
     questions_df = st.session_state.questions.copy()
     idx = questions_df.index[questions_df['id'] == str(question_id)].tolist()
-    if idx:
-        updated = False
-        if testo_domanda is not None: questions_df.at[idx[0], 'domanda'] = str(testo_domanda); updated = True
-        if risposta_prevista is not None: questions_df.at[idx[0], 'risposta_attesa'] = str(risposta_prevista); updated = True
-        if categoria is not None: questions_df.at[idx[0], 'categoria'] = str(categoria); updated = True
-        if updated: save_questions(questions_df)
-        return True
-    return False
+    if not idx:
+        return False
+
+    updates = []
+    params = {'id': str(question_id)}
+    if testo_domanda is not None:
+        questions_df.at[idx[0], 'domanda'] = str(testo_domanda)
+        updates.append('domanda = :domanda')
+        params['domanda'] = str(testo_domanda)
+    if risposta_prevista is not None:
+        questions_df.at[idx[0], 'risposta_attesa'] = str(risposta_prevista)
+        updates.append('risposta_attesa = :risposta_attesa')
+        params['risposta_attesa'] = str(risposta_prevista)
+    if categoria is not None:
+        questions_df.at[idx[0], 'categoria'] = str(categoria)
+        updates.append('categoria = :categoria')
+        params['categoria'] = str(categoria)
+
+    if updates:
+        engine = get_engine()
+        with engine.begin() as conn:
+            conn.execute(
+                text(f"UPDATE questions SET {', '.join(updates)} WHERE id = :id"),
+                params
+            )
+        st.session_state.questions = questions_df
+    return True
 
 def delete_question(question_id):
+    """Elimina una domanda dal database usando il suo ID."""
+    if 'questions' not in st.session_state:
+        st.session_state.questions = load_questions()
+
     questions_df = st.session_state.questions.copy()
     questions_df = questions_df[questions_df['id'] != str(question_id)]
-    save_questions(questions_df)
+
+    engine = get_engine()
+    with engine.begin() as conn:
+        conn.execute(text('DELETE FROM questions WHERE id = :id'), {'id': str(question_id)})
+
+    st.session_state.questions = questions_df
     update_sets_after_question_deletion(str(question_id))
 
 def update_sets_after_question_deletion(question_id):
-    sets_df = st.session_state.question_sets.copy()
-    if not sets_df.empty:
-        sets_df['questions'] = sets_df['questions'].apply(lambda q_list: [q_id for q_id in q_list if str(q_id) != str(question_id)] if isinstance(q_list, list) else [])
-        save_question_sets(sets_df)
+    engine = get_engine()
+    with engine.begin() as conn:
+        conn.execute(text('DELETE FROM question_set_questions WHERE question_id = :qid'), {'qid': str(question_id)})
+    st.session_state.question_sets = load_question_sets()
 
 def create_question_set(name, question_ids=None):
-    """Crea un nuovo set di domande."""
-    sets_df = st.session_state.question_sets.copy()
-    new_set_data = {'id': str(uuid.uuid4()), 'name': str(name), 'questions': [str(qid) for qid in question_ids] if question_ids else []}
-    new_set_df = pd.DataFrame([new_set_data])
-    sets_df = pd.concat([sets_df, new_set_df], ignore_index=True)
-    save_question_sets(sets_df)
-    return new_set_data['id']
+    """Crea un nuovo set di domande inserendolo nel database."""
+    if 'question_sets' not in st.session_state:
+        st.session_state.question_sets = load_question_sets()
+
+    new_set_id = str(uuid.uuid4())
+    new_set_data = {
+        'id': new_set_id,
+        'name': str(name),
+        'questions': [str(qid) for qid in question_ids] if question_ids else []
+    }
+
+    engine = get_engine()
+    with engine.begin() as conn:
+        conn.execute(
+            text('INSERT INTO question_sets (id, name) VALUES (:id, :name)'),
+            {'id': new_set_id, 'name': new_set_data['name']}
+        )
+        for qid in new_set_data['questions']:
+            conn.execute(
+                text('INSERT INTO question_set_questions (set_id, question_id) VALUES (:sid, :qid)'),
+                {'sid': new_set_id, 'qid': qid}
+            )
+
+    new_df = pd.DataFrame([new_set_data])
+    st.session_state.question_sets = pd.concat([st.session_state.question_sets, new_df], ignore_index=True)
+    return new_set_id
 
 def update_question_set(set_id, name=None, question_ids=None):
+    """Aggiorna un set di domande nel database."""
+    if 'question_sets' not in st.session_state:
+        st.session_state.question_sets = load_question_sets()
+
     sets_df = st.session_state.question_sets.copy()
     idx = sets_df.index[sets_df['id'] == str(set_id)].tolist()
-    if idx:
-        updated = False
-        if name is not None: sets_df.at[idx[0], 'name'] = str(name); updated = True
-        if question_ids is not None: sets_df.at[idx[0], 'questions'] = [str(qid) for qid in question_ids]; updated = True
-        if updated: save_question_sets(sets_df)
-        return True
-    return False
+    if not idx:
+        return False
+
+    engine = get_engine()
+    with engine.begin() as conn:
+        if name is not None:
+            sets_df.at[idx[0], 'name'] = str(name)
+            conn.execute(text('UPDATE question_sets SET name=:name WHERE id=:id'), {'id': str(set_id), 'name': str(name)})
+
+        if question_ids is not None:
+            new_ids = [str(qid) for qid in question_ids]
+            sets_df.at[idx[0], 'questions'] = new_ids
+            existing_q = conn.execute(text('SELECT question_id FROM question_set_questions WHERE set_id=:sid'), {'sid': str(set_id)}).fetchall()
+            existing_q_ids = [r[0] for r in existing_q]
+            for qid in set(existing_q_ids) - set(new_ids):
+                conn.execute(text('DELETE FROM question_set_questions WHERE set_id=:sid AND question_id=:qid'), {'sid': str(set_id), 'qid': qid})
+            for qid in set(new_ids) - set(existing_q_ids):
+                conn.execute(text('INSERT INTO question_set_questions (set_id, question_id) VALUES (:sid, :qid)'), {'sid': str(set_id), 'qid': qid})
+
+    st.session_state.question_sets = sets_df
+    return True
 
 
 def add_question_set(name, question_ids=None):
@@ -252,47 +397,48 @@ def add_question_set(name, question_ids=None):
     Returns:
         L'ID del nuovo set di domande creato
     """
-    # Carica i set di domande esistenti
-    sets_df = st.session_state.question_sets.copy()
-
-    # Crea un nuovo ID per il set
-    new_set_id = str(uuid.uuid4())
-
-    # Prepara i dati del nuovo set
-    new_set_data = {
-        'id': new_set_id,
-        'name': str(name),
-        'questions': [str(qid) for qid in question_ids] if question_ids else []
-    }
-
-    # Converte in DataFrame e aggiunge al DataFrame esistente
-    new_set_df = pd.DataFrame([new_set_data])
-    sets_df = pd.concat([sets_df, new_set_df], ignore_index=True)
-
-    # Salva i set aggiornati
-    save_question_sets(sets_df)
-
-    # Restituisce l'ID del nuovo set
-    return new_set_id
+    return create_question_set(name, question_ids)
 
 
 
 def delete_question_set(set_id):
+    """Elimina un set di domande dal database."""
+    if 'question_sets' not in st.session_state:
+        st.session_state.question_sets = load_question_sets()
+
     sets_df = st.session_state.question_sets.copy()
     sets_df = sets_df[sets_df['id'] != str(set_id)]
-    save_question_sets(sets_df)
+
+    engine = get_engine()
+    with engine.begin() as conn:
+        conn.execute(text('DELETE FROM question_set_questions WHERE set_id = :id'), {'id': str(set_id)})
+        conn.execute(text('DELETE FROM question_sets WHERE id = :id'), {'id': str(set_id)})
+
+    st.session_state.question_sets = sets_df
 
 def add_test_result(set_id, results_data):
-    # 检查session_state.results是否存在，如果不存在则加载
+    """Aggiunge un risultato di test nel database."""
     if 'results' not in st.session_state:
         st.session_state.results = load_results()
-    
-    results_df = st.session_state.results.copy()
-    new_result_data = {'id': str(uuid.uuid4()), 'set_id': str(set_id), 'timestamp': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S'), 'results': results_data if isinstance(results_data, dict) else {}}
-    new_result_df = pd.DataFrame([new_result_data])
-    results_df = pd.concat([results_df, new_result_df], ignore_index=True)
-    save_results(results_df)
-    return new_result_data['id']
+
+    new_id = str(uuid.uuid4())
+    new_result_data = {
+        'id': new_id,
+        'set_id': str(set_id),
+        'timestamp': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'results': results_data if isinstance(results_data, dict) else {}
+    }
+
+    engine = get_engine()
+    with engine.begin() as conn:
+        conn.execute(
+            text('''INSERT INTO test_results (id, set_id, timestamp, results) VALUES (:id, :set_id, :timestamp, :results)'''),
+            {'id': new_id, 'set_id': new_result_data['set_id'], 'timestamp': new_result_data['timestamp'], 'results': json.dumps(new_result_data['results'])}
+        )
+
+    new_df = pd.DataFrame([new_result_data])
+    st.session_state.results = pd.concat([st.session_state.results, new_df], ignore_index=True)
+    return new_id
 
 def import_questions_from_file(file):
     try:
@@ -317,10 +463,11 @@ def import_questions_from_file(file):
         imported_df['domanda'] = imported_df['domanda'].astype(str).fillna("")
         imported_df['risposta_attesa'] = imported_df['risposta_attesa'].astype(str).fillna("")
         final_imported_df = imported_df[['id', 'domanda', 'risposta_attesa', 'categoria']]
-        questions_df = st.session_state.questions.copy()
-        questions_df = pd.concat([questions_df, final_imported_df], ignore_index=True)
-        save_questions(questions_df)
-        return True, f"Importate con successo {len(final_imported_df)} domande."
+        added_count = 0
+        for _, row in final_imported_df.iterrows():
+            add_question(row['domanda'], row['risposta_attesa'], row['categoria'], question_id=row['id'])
+            added_count += 1
+        return True, f"Importate con successo {added_count} domande."
     except Exception as e:
         return False, f"Errore durante l'importazione delle domande: {str(e)}"
 
@@ -335,26 +482,7 @@ def add_question_if_not_exists(question_id: str, testo_domanda: str, risposta_pr
 
     questions_df = st.session_state.questions.copy()
 
-    # Controlla se l'ID esiste già, assicurando il confronto tra stringhe
     if str(question_id) in questions_df['id'].astype(str).values:
-        return False  # Domanda già esistente
-
-    new_question_data = {
-        'id': str(question_id),
-        'domanda': str(testo_domanda),
-        'risposta_attesa': str(risposta_prevista),
-        'categoria': str(categoria) if categoria else ""
-    }
-    # Gestione di DataFrame vuoto o con colonne mancanti
-    if questions_df.empty:
-        questions_df = pd.DataFrame([new_question_data], columns=['id', 'domanda', 'risposta_attesa', 'categoria'])
-    else:
-        new_question_df = pd.DataFrame([new_question_data])
-        questions_df = pd.concat([questions_df, new_question_df], ignore_index=True)
-    
-    save_questions(questions_df) # Salva il DataFrame aggiornato nello stato e nel file
+        return False
+    add_question(testo_domanda, risposta_prevista, categoria, question_id=str(question_id))
     return True
-
-# ... (il resto del codice di data_utils.py rimane invariato, inclusa la funzione import_questions_from_file) ...
-# Assicurati di inserire questa nuova funzione nel punto appropriato del file, 
-# ad esempio dopo le altre funzioni di manipolazione delle domande.

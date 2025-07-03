@@ -15,7 +15,7 @@ from utils.data_utils import load_api_presets, save_api_presets, initialize_data
 initialize_data()
 
 add_page_header(
-    "Configurazione API per LLM",
+    "Gestione Preset API",
     icon="⚙️",
     description="Crea, visualizza, testa ed elimina i preset di configurazione API per LLM."
 )
@@ -226,13 +226,3 @@ if "preset_deleted_message" in st.session_state:
     st.success(st.session_state.preset_deleted_message)
     del st.session_state.preset_deleted_message
 
-# Seleziona preset per la generazione di risposta
-preset_names_to_id = {preset['name']: preset['id'] for _, preset in st.session_state.api_presets.iterrows()}
-preset_display_names = list(preset_names_to_id.keys())
-
-if not preset_display_names:  # Aggiunta verifica per evitare riferimenti a variabile non definita
-    st.error("Nessun preset API configurato. Vai alla pagina 'Gestione Preset API' per crearne almeno uno prima di eseguire i test.")
-    st.stop()
-
-# Seleziona preset per valutazione (se presente)
-# Rimosso dalla pagina di configurazione API - appartiene alla pagina di esecuzione test

@@ -13,7 +13,7 @@ import uuid # Assicurati che uuid sia importato se data_utils lo usa internament
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from utils.data_utils import (
-    load_questions, load_question_sets, save_question_sets,
+    load_questions, load_question_sets,
     create_question_set, update_question_set, delete_question_set,
     import_questions_from_file, add_question_if_not_exists
 )
