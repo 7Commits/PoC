@@ -1,0 +1,32 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_DATABASE: llm_platform
+    ports:
+      - '3306:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - llm-network
+
+  app:
+    build: .
+    container_name: llm-app
+    ports:
+      - '8501:8501'
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+    networks:
+      - llm-network
+
+volumes:
+  db_data:
+networks:
+  llm-network:

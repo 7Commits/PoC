@@ -12,10 +12,8 @@ def get_engine():
         config = configparser.ConfigParser()
         config.read(Path(__file__).resolve().parent.parent / 'db.config')
         cfg = config['mysql']
-        ssl_ca_path = Path(__file__).resolve().parent.parent / cfg.get('ssl_ca', '')
         url = (
-            f"mysql+pymysql://{cfg['user']}:{cfg['password']}@{cfg['host']}:{cfg.get('port', 3306)}/"
-            f"{cfg['database']}?ssl_ca={ssl_ca_path}"
+            f"mysql+pymysql://{cfg['user']}:{cfg['password']}@{cfg['host']}:{cfg.get('port', 3306)}/{cfg['database']}"            f"{cfg['database']}"
         )
         _engine = create_engine(url)
     return _engine
