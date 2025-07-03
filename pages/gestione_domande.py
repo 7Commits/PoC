@@ -3,13 +3,12 @@ import pandas as pd
 import sys
 import os
 import json
-from io import StringIO
 
 # Aggiungi la directory genitore al percorso in modo da poter importare da utils
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from utils.data_utils import (
-    load_questions, save_questions, add_question, update_question,
+    load_questions, add_question, update_question,
     delete_question, import_questions_from_file
 )
 from utils.ui_utils import add_page_header, add_section_title, create_card

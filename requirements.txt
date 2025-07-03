@@ -3,6 +3,9 @@ pandas
 plotly
 openai
 uuid
+sqlalchemy
+pymysql
 
 
 #installa con pip install -r requirements.txt
+
