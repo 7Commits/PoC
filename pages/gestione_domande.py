@@ -80,6 +80,8 @@ if 'save_error' not in st.session_state:
     st.session_state.save_error = False
 if 'delete_success' not in st.session_state:
     st.session_state.delete_success = False
+if 'add_success' not in st.session_state:
+    st.session_state.add_success = False
 if 'import_success' not in st.session_state:
     st.session_state.import_success = False
 if 'import_error' not in st.session_state:
@@ -104,6 +106,10 @@ if st.session_state.save_error:
 if st.session_state.delete_success:
     st.success(st.session_state.get('delete_success_message', 'Eliminazione completata con successo!'))
     st.session_state.delete_success = False
+
+if st.session_state.add_success:
+    st.success(st.session_state.get('add_success_message', 'Domanda aggiunta con successo!'))
+    st.session_state.add_success = False
 
 if st.session_state.import_success:
     st.success(st.session_state.get('import_success_message', 'Importazione completata con successo!'))
@@ -160,7 +166,9 @@ with tabs[0]:
                 # Usa .get('categoria', 'N/A') per una gestione sicura se 'categoria' non fosse presente o fosse NaN dopo il filtro
                 # Anche se abbiamo gestito i NaN prima, è una buona pratica per la robustezza.
                 category_display = row.get('categoria', 'N/A') if pd.notna(row.get('categoria')) else 'N/A'
-                with st.expander(f"Domanda: {row['domanda'][:100]}... (Categoria: {category_display})"):
+                with st.expander(
+                    f"Domanda: {row['domanda'][:100]}... (Categoria: {category_display})"
+                ):
                     col1, col2 = st.columns([3, 1])
 
                     with col1:
@@ -221,7 +229,9 @@ with tabs[1]:
                 # Passa la categoria, che può essere una stringa vuota se non inserita
                 question_id = add_question(testo_domanda=domanda, risposta_prevista=risposta_attesa,
                                            categoria=categoria)
-                st.success(f"Domanda aggiunta con successo con ID: {question_id}")
+                st.session_state.add_success_message = f"Domanda aggiunta con successo con ID: {question_id}"
+                st.session_state.add_success = True
+                st.session_state.trigger_rerun = True
                 st.rerun()
             else:
                 st.error("Sono necessarie sia la domanda che la risposta attesa.")

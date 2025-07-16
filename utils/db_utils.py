@@ -13,7 +13,7 @@ def get_engine():
         config.read(Path(__file__).resolve().parent.parent / 'db.config')
         cfg = config['mysql']
         url = (
-            f"mysql+pymysql://{cfg['user']}:{cfg['password']}@{cfg['host']}:{cfg.get('port', 3306)}/{cfg['database']}"            f"{cfg['database']}"
+            f"mysql+pymysql://{cfg['user']}:{cfg['password']}@{cfg['host']}:{cfg.get('port', 3306)}/{cfg['database']}"
         )
         _engine = create_engine(url)
     return _engine
@@ -37,8 +37,7 @@ def init_db():
             text(
                 """CREATE TABLE IF NOT EXISTS question_sets (
                     id VARCHAR(36) PRIMARY KEY,
-                    name TEXT,
-                    questions TEXT
+                    name TEXT
                 )"""
             )
         )

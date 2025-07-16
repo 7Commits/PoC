@@ -68,8 +68,23 @@ PoC/
 │   ├── gestione_set.py        # Gestione dei set di domande
 │   └── visualizza_risultati.py# Visualizzazione dei risultati dei test
 ├── utils/                     # Script di utilità
-│   ├── api_utils.py           # Utility per la configurazione delle API
 │   ├── data_utils.py          # Utility per la gestione dei dati
 │   ├── openai_utils.py        # Utility per l'interazione con OpenAI
-│   └── ui_utils.py            # Utility per l'interfaccia utente Streamlit
+│   ├── ui_utils.py            # Utility per l'interfaccia utente Streamlit
+│   └── db_utils.py            # Utility per le operazioni di database
 
+## Esecuzione con Docker
+
+Per avviare la piattaforma tramite *Docker* è possibile utilizzare
+`docker-compose`:
+
+```bash
+docker-compose up --build
+```
+
+Nel file `docker-compose.yml` il servizio MySQL utilizza
+`MYSQL_ROOT_HOST: '%'` per consentire la connessione dal container
+dell'applicazione. Assicurati che in `db.config` siano configurati
+`host=db` e `port=3306`.
+
+# PocReal

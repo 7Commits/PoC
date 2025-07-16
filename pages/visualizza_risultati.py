@@ -38,7 +38,7 @@ for _, row in st.session_state.results.iterrows():
     set_name = get_set_name(row['set_id'])
     avg_score = result_data.get('avg_score', 0)
     method = result_data.get('method', 'N/A')
-    method_icon = "🤖" if method == "LLM" else "🔍" if method == "BM25" else "📊"
+    method_icon = "🤖" if method == "LLM" else "📊"
     
     processed_results_for_select.append({
         'id': row['id'],
@@ -70,8 +70,8 @@ questions_results = result_data.get('questions', {})
 
 # Visualizza informazioni generali sul risultato
 evaluation_method = result_data.get('method', 'LLM')
-method_icon = "🤖" if evaluation_method == "LLM" else "🔍"
-method_desc = "Valutazione LLM" if evaluation_method == "LLM" else "Valutazione BM25"
+method_icon = "🤖" if evaluation_method == "LLM" else "📊"
+method_desc = "Valutazione LLM" if evaluation_method == "LLM" else "Metodo sconosciuto"
 
 add_section_title(f"Dettaglio Test: {set_name} [{method_icon} {evaluation_method}]", icon="📄")
 st.markdown(f"**ID Risultato:** `{selected_result_id}`")
@@ -83,14 +83,6 @@ if 'generation_preset' in result_data:
 if evaluation_method == "LLM" and 'evaluation_preset' in result_data:
     st.markdown(f"**Preset Valutazione Risposte (LLM):** `{result_data['evaluation_preset']}`")
 
-if evaluation_method == "BM25" and 'parameters' in result_data:
-    params = result_data['parameters']
-    with st.expander("Parametri BM25 Utilizzati"):
-        k1 = params.get('k1', 'N/A')
-        b = params.get('b', 'N/A')
-        ht = params.get('high_threshold', 'N/A')
-        mt = params.get('medium_threshold', 'N/A')
-        st.json({ "k1": k1, "b": b, "Soglia Alta": f"{ht}%", "Soglia Media": f"{mt}%" })
 
 # Metriche Generali del Test
 add_section_title("Metriche Generali del Test", icon="📈")
@@ -105,11 +97,12 @@ if questions_results:
     with cols_metrics[1]:
         st.metric("Numero di Domande Valutate", num_questions)
     
-    # Grafico a barre dei punteggi per domanda (se applicabile)
-    if evaluation_method == "LLM":
-        scores_per_q = {q_data.get('question', f'Domanda {i}')[:50]+"...": q_data.get('evaluation',{}).get('score',0) for i, (q_id, q_data) in enumerate(questions_results.items())}
-    else: # BM25
-        scores_per_q = {q_data.get('question', f'Domanda {i}')[:50]+"...": q_data.get('similarity_score',0) for i, (q_id, q_data) in enumerate(questions_results.items())}
+    # Grafico a barre dei punteggi per domanda
+    scores_per_q = {
+        q_data.get('question', f'Domanda {i}')[:50] + "...":
+        q_data.get('evaluation', {}).get('score', 0)
+        for i, (q_id, q_data) in enumerate(questions_results.items())
+    }
 
     if scores_per_q:
         df_scores = pd.DataFrame(list(scores_per_q.items()), columns=['Domanda', 'Punteggio'])
@@ -224,7 +217,9 @@ else:
         expected_answer = q_data.get('expected_answer', "Risposta attesa non disponibile")
         actual_answer = q_data.get('actual_answer', "Risposta effettiva non disponibile")
         
-        with st.expander(f"Domanda: {question_text[:100]}..."):
+        with st.expander(
+            f"Domanda: {question_text[:100]}..."
+        ):
             st.markdown(f"**Domanda:** {question_text}")
             st.markdown(f"**Risposta Attesa:** {expected_answer}")
             st.markdown(f"**Risposta Generata/Effettiva:** {actual_answer}")
@@ -253,9 +248,6 @@ else:
             
             if evaluation_method == "LLM":
                 evaluation = q_data.get('evaluation', {}) # Assicurati che evaluation sia sempre un dizionario
-                # RIGA DI DEBUG RIMOSSA
-                st.markdown(f"##### Valutazione LLM")
-                evaluation = q_data.get('evaluation', {})
                 st.markdown(f"##### Valutazione LLM")
                 score = evaluation.get('score', 0)
                 explanation = evaluation.get('explanation', "Nessuna spiegazione.")
@@ -285,20 +277,4 @@ else:
                             st.caption("Errore API:")
                             st.error(api_details['error'])
             
-            elif evaluation_method == "BM25":
-                st.markdown(f"##### Valutazione BM25")
-                similarity_score = q_data.get('similarity_score', 0)
-                match_level = q_data.get('match_level', 'N/A')
-                suggestions = q_data.get('suggestions', 'Nessun suggerimento.')
-                missing_keywords = q_data.get('missing_keywords', [])
-                extra_keywords = q_data.get('extra_keywords', [])
-                
-                st.markdown(f"**Punteggio Similarità BM25:** {similarity_score:.2f}%")
-                st.markdown(f"**Livello di Match:** {match_level.capitalize()}")
-                st.markdown(f"**Suggerimenti:** {suggestions}")
-                
-                if missing_keywords:
-                    st.markdown(f"**Termini Mancanti:** `{', '.join(missing_keywords)}`")
-                if extra_keywords:
-                    st.markdown(f"**Termini in Eccesso:** `{', '.join(extra_keywords)}`")
             st.markdown("--- --- ---")

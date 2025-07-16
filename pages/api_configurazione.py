@@ -60,9 +60,38 @@ def cancel_preset_edit():
     st.session_state.preset_form_data = {}
 
 def save_preset_from_form():
-    # Ottiene direttamente il valore dal campo input tramite session_state
-    form_data = st.session_state.preset_form_data.copy()
+    """Salva un preset leggendo i valori direttamente dagli input della form."""
+    # Recupera sempre i valori correnti dei widget dal session_state
     preset_name = st.session_state.get("preset_name", "").strip()
+    endpoint = st.session_state.get("preset_endpoint", DEFAULT_ENDPOINT)
+    api_key = st.session_state.get("preset_api_key", "")
+    model = st.session_state.get("preset_model", DEFAULT_MODEL)
+    temperature = float(
+        st.session_state.get(
+            "preset_temperature",
+            st.session_state.preset_form_data.get("temperature", 0.0),
+        )
+    )
+    max_tokens = int(
+        st.session_state.get(
+            "preset_max_tokens",
+            st.session_state.preset_form_data.get("max_tokens", 1000),
+        )
+    )
+
+    # Aggiorna il dizionario del form in sessione con i valori raccolti
+    st.session_state.preset_form_data.update(
+        {
+            "name": preset_name,
+            "endpoint": endpoint,
+            "api_key": api_key,
+            "model": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+    )
+
+    form_data = st.session_state.preset_form_data.copy()
     
     if not preset_name:
         st.error("Il nome del preset non può essere vuoto.")
@@ -158,8 +187,22 @@ if st.session_state.editing_preset:
             help="Inserisci il nome del modello (es: gpt-4o, claude-3-sonnet, ecc.)"
         )
 
-        form_data["temperature"] = st.slider("Temperatura", 0.0, 2.0, float(form_data.get("temperature", 0.0)), 0.1)
-        form_data["max_tokens"] = st.number_input("Max Tokens", min_value=50, max_value=8000, value=int(form_data.get("max_tokens", 1000)), step=50)
+        form_data["temperature"] = st.slider(
+            "Temperatura",
+            0.0,
+            2.0,
+            float(form_data.get("temperature", 0.0)),
+            0.1,
+            key="preset_temperature",
+        )
+        form_data["max_tokens"] = st.number_input(
+            "Max Tokens",
+            min_value=50,
+            max_value=8000,
+            value=int(form_data.get("max_tokens", 1000)),
+            step=50,
+            key="preset_max_tokens",
+        )
         
         # Campo Test Connessione e pulsanti di salvataggio/annullamento
         # Pulsante Test Connessione

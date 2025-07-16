@@ -6,6 +6,7 @@ services:
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
       MYSQL_DATABASE: llm_platform
+      MYSQL_ROOT_HOST: '%'
     ports:
       - '3306:3306'
     volumes:
