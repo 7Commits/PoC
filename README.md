@@ -70,7 +70,8 @@ PoC/
 ├── utils/                     # Script di utilità
 │   ├── data_utils.py          # Utility per la gestione dei dati
 │   ├── openai_utils.py        # Utility per l'interazione con OpenAI
-│   └── ui_utils.py            # Utility per l'interfaccia utente Streamlit
+│   ├── ui_utils.py            # Utility per l'interfaccia utente Streamlit
+│   └── db_utils.py            # Utility per le operazioni di database
 
 ## Esecuzione con Docker
 
