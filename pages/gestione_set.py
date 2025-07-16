@@ -3,11 +3,7 @@ import pandas as pd
 import sys
 import os
 import json
-import uuid # Assicurati che uuid sia importato se data_utils lo usa internamente e non lo esporta
-# Importa le funzioni necessarie da data_utils
-# Dovresti avere qualcosa come:
-# from data_utils import add_question_if_not_exists, create_question_set, load_questions, load_question_sets
-# Oppure:
+import uuid
 
 # Aggiungi la directory genitore al percorso in modo da poter importare da utils
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -18,11 +14,6 @@ from utils.data_utils import (
     import_questions_from_file, add_question_if_not_exists
 )
 from utils.ui_utils import add_page_header, add_section_title, create_card, create_metrics_container
-
-# Assicurati che questa importazione sia presente all'inizio del file
-
-import streamlit as st
-# import pandas as pd # Se necessario
 
 # === CALLBACK FUNCTIONS ===
 
@@ -219,6 +210,8 @@ def import_set_callback():
             st.session_state.import_set_error = True
             st.session_state.import_set_error_message = f"Errore imprevisto durante l'importazione: {str(e)}"
         finally:
+            if st.session_state.import_set_success:
+                st.session_state.uploaded_file_content_set = None
             st.session_state.trigger_rerun = True
     else:
         st.session_state.import_set_error = True
@@ -230,6 +223,8 @@ if 'save_set_error' not in st.session_state:
     st.session_state.save_set_error = False
 if 'delete_set_success' not in st.session_state:
     st.session_state.delete_set_success = False
+if 'create_set_success' not in st.session_state:
+    st.session_state.create_set_success = False
 if 'import_set_success' not in st.session_state:
     st.session_state.import_set_success = False
 if 'import_set_error' not in st.session_state:
@@ -241,6 +236,8 @@ if 'question_checkboxes' not in st.session_state:
     st.session_state.question_checkboxes = {}
 if 'newly_selected_questions' not in st.session_state:
     st.session_state.newly_selected_questions = {}
+if 'set_expanders' not in st.session_state:
+    st.session_state.set_expanders = {}
 
 if st.session_state.trigger_rerun:
     st.session_state.trigger_rerun = False
@@ -258,6 +255,10 @@ if st.session_state.delete_set_success:
     st.success(st.session_state.get('delete_set_success_message', 'Set eliminato con successo!'))
     st.session_state.delete_set_success = False
 
+if st.session_state.create_set_success:
+    st.success(st.session_state.get('create_set_success_message', 'Set creato con successo!'))
+    st.session_state.create_set_success = False
+
 if st.session_state.import_set_success:
     st.success(st.session_state.get('import_set_success_message', 'Importazione completata con successo!'))
     st.session_state.import_set_success = False
@@ -271,6 +272,17 @@ if 'questions' not in st.session_state or st.session_state.questions.empty:
     st.session_state.questions = load_questions()
 if 'question_sets' not in st.session_state:
     st.session_state.question_sets = load_question_sets()
+
+# Assicurati che esista lo stato degli expander per ogni set
+if 'question_sets' in st.session_state and not st.session_state.question_sets.empty:
+    current_set_ids = st.session_state.question_sets['id'].tolist()
+    # Rimuovi stati per set non più presenti
+    for sid in list(st.session_state.set_expanders.keys()):
+        if sid not in current_set_ids:
+            del st.session_state.set_expanders[sid]
+    # Aggiungi stato predefinito per nuovi set
+    for sid in current_set_ids:
+        st.session_state.set_expanders.setdefault(sid, False)
 
 # Assicurati che la colonna 'categoria' esista in questions_df e gestisci i NaN
 if 'questions' in st.session_state and not st.session_state.questions.empty:
@@ -314,12 +326,19 @@ def get_question_category(question_id, questions_df):
     return 'N/A'  # Ritorna 'N/A' se non trovata o colonna mancante
 
 
-def create_save_set_callback(set_id):
+def mark_expander_open(exp_key):
+    """Mark the given expander as open in session state."""
+    if 'set_expanders' in st.session_state:
+        st.session_state.set_expanders[exp_key] = True
+
+
+def create_save_set_callback(set_id, exp_key):
     def callback():
+        mark_expander_open(exp_key)
         edited_name = st.session_state.get(f"set_name_{set_id}", "")
         question_options_checkboxes = st.session_state.question_checkboxes.get(set_id, {})
         newly_selected_questions_ids = st.session_state.newly_selected_questions.get(set_id, [])
-        
+
         save_set_callback(set_id, edited_name, question_options_checkboxes, newly_selected_questions_ids)
     
     return callback
@@ -393,14 +412,23 @@ with tabs[0]:
             st.info("Nessun set di domande disponibile. Crea un nuovo set utilizzando la scheda 'Crea Nuovo Set'.")
 
         for idx, row in display_sets_df.iterrows():
-            with st.expander(f"Set: {row['name']}"):
+            exp_key = f"set_expander_{row['id']}"
+            if exp_key not in st.session_state.set_expanders:
+                st.session_state.set_expanders[exp_key] = False
+
+            with st.expander(
+                f"Set: {row['name']}",
+                expanded=st.session_state.set_expanders.get(exp_key, False),
+            ):
                 col1, col2 = st.columns([3, 1])
 
                 with col1:
                     edited_name = st.text_input(
                         f"Nome Set",
                         value=row['name'],
-                        key=f"set_name_{row['id']}"
+                        key=f"set_name_{row['id']}",
+                        on_change=mark_expander_open,
+                        args=(exp_key,)
                     )
 
                     st.subheader("Domande in questo Set")
@@ -421,7 +449,9 @@ with tabs[0]:
                             checkbox_value = st.checkbox(
                                 display_text,
                                 value=True,
-                                key=f"qcheck_{row['id']}_{q_id}"
+                                key=f"qcheck_{row['id']}_{q_id}",
+                                on_change=mark_expander_open,
+                                args=(exp_key,)
                             )
                             st.session_state.question_checkboxes[row['id']][str(q_id)] = checkbox_value
                     else:
@@ -449,7 +479,9 @@ with tabs[0]:
                                 "Seleziona domande da aggiungere",
                                 options=list(question_dict_for_multiselect.keys()),
                                 format_func=lambda x: question_dict_for_multiselect.get(x, x),
-                                key=f"add_q_{row['id']}"
+                                key=f"add_q_{row['id']}",
+                                on_change=mark_expander_open,
+                                args=(exp_key,)
                             )
                             st.session_state.newly_selected_questions[row['id']] = newly_selected_questions_ids
                         else:
@@ -459,18 +491,21 @@ with tabs[0]:
 
                 with col2:
                     st.button(
-                        "Salva Modifiche", 
+                        "Salva Modifiche",
                         key=f"save_set_{row['id']}",
-                        on_click=create_save_set_callback(row['id'])
+                        on_click=create_save_set_callback(row['id'], exp_key)
                     )
 
                     # Pulsante Elimina con dialog di conferma
                     if st.button(
-                        "Elimina Set", 
+                        "Elimina Set",
                         key=f"delete_set_{row['id']}",
                         type="secondary"
                     ):
+                        mark_expander_open(exp_key)
                         confirm_delete_set_dialog(row['id'], row['name'])
+
+            # Lo stato dell'expander viene aggiornato tramite i callback
 
     elif not sets_ready or (st.session_state.question_sets.empty and not selected_categories):
         st.info("Nessun set di domande disponibile. Crea un nuovo set utilizzando la scheda 'Crea Nuovo Set'.")
@@ -509,7 +544,9 @@ with tabs[1]:
         if submitted:
             if set_name:
                 set_id = create_question_set(set_name, [str(q_id) for q_id in selected_qs_for_new_set])
-                st.success(f"Set di domande creato con successo con ID: {set_id}")
+                st.session_state.create_set_success_message = f"Set di domande creato con successo con ID: {set_id}"
+                st.session_state.create_set_success = True
+                st.session_state.trigger_rerun = True
                 st.rerun()
             else:
                 st.error("Il nome del set è obbligatorio.")

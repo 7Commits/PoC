@@ -37,8 +37,6 @@ if 'mode_changed' not in st.session_state:
     st.session_state.mode_changed = False
 if 'run_llm_test' not in st.session_state:
     st.session_state.run_llm_test = False
-if 'run_bm25_test' not in st.session_state:
-    st.session_state.run_bm25_test = False
 
 # Gestisce il cambio di modalità
 if st.session_state.mode_changed:
@@ -147,9 +145,6 @@ if st.session_state.test_mode == "Valutazione Automatica con LLM":
         help="Il preset API utilizzato dall'LLM per valutare la similarità e correttezza della risposta generata."
     )
     st.session_state.selected_evaluation_preset_name = evaluation_preset_name
-else:
-    # Per BM25, non c'è un preset di valutazione LLM
-    st.session_state.selected_evaluation_preset_name = None
 
 show_api_details = st.checkbox("Mostra Dettagli Chiamate API nei Risultati", value=False)
 
@@ -230,7 +225,9 @@ if test_mode_selected == "Valutazione Automatica con LLM":
                     # Visualizzazione risultati dettagliati
                     st.subheader("Risultati Dettagliati")
                     for q_id, result in results.items():
-                        with st.expander(f"Domanda: {result['question'][:50]}..."):
+                        with st.expander(
+                            f"Domanda: {result['question'][:50]}..."
+                        ):
                             col1, col2 = st.columns(2)
                             with col1:
                                 st.write("**Domanda:**", result['question'])

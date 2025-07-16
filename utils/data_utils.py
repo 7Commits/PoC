@@ -9,7 +9,12 @@ from .db_utils import get_engine, init_db
 
 def initialize_data():
     """Inizializza il database creando le tabelle."""
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        import streamlit as st
+        st.error(f"Errore durante l'inizializzazione del database: {e}")
+        st.info("Assicurati che il database MySQL sia in esecuzione e configurato correttamente in db.config")
 
 
 def load_api_presets():

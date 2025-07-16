@@ -1,11 +1,14 @@
 import os
 import sys
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+# Aggiungi la directory corrente al percorso
+sys.path.append(os.path.dirname(__file__))
 
 try:
     from utils.db_utils import init_db
 except ModuleNotFoundError as exc:
-    print("Modulo mancante: sqlalchemy. Installa le dipendenze con 'pip install -r requirements.txt'")
+    print("Modulo mancante. Installa le dipendenze con 'pip install -r requirements.txt'")
+    print(f"Errore specifico: {exc}")
     raise exc
 
 if __name__ == '__main__':

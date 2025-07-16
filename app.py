@@ -60,6 +60,7 @@ from utils.ui_utils import add_global_styles, add_page_header
 # Aggiungi CSS personalizzato e stili globali
 add_global_styles()
 
+
 # CSS Estremo per Visibilità Input in Tema Scuro
 st.markdown("""
 <style>
@@ -211,11 +212,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
 # Pagina di benvenuto dell'app principale
 st.markdown("""
 <div class="welcome-section">
     <h1 class="welcome-title">🧠 Piattaforma di Valutazione LLM</h1>
-    <p class="subtitle">Una piattaforma completa per valutare le risposte LLM con diversi provider AI e l'algoritmo Best Matching 25 (BM25) per il confronto di testi</p>
+    <p class="subtitle">Una piattaforma completa per valutare le risposte LLM con diversi provider AI</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -256,7 +258,7 @@ with col2:
         </p>
         <p class="feature-description">
             Esegui test con punteggio automatico rispetto alle risposte previste.
-            Utilizza l'algoritmo BM25 per valutare la somiglianza semantica tra testi.
+            Valuta la somiglianza semantica tra testi con modelli linguistici.
         </p>
     </div>
     
@@ -279,79 +281,9 @@ st.markdown("""
         <li>Configura le tue credenziali API nella pagina <strong>Configurazione API</strong></li>
         <li>Crea domande e risposte previste nella pagina <strong>Gestione Domande</strong></li>
         <li>Organizza le domande in set nella pagina <strong>Gestione Set di Domande</strong></li>
-        <li>Esegui valutazioni nella pagina <strong>Esecuzione Test</strong> o utilizza <strong>Valutazione BM25</strong> per un'analisi basata sui termini</li>
+        <li>Esegui valutazioni nella pagina <strong>Esecuzione Test</strong></li>
         <li>Visualizza e analizza i risultati nella pagina <strong>Visualizzazione Risultati</strong></li>
     </ol>
     <p>Utilizza la barra laterale a sinistra per navigare tra queste funzionalità.</p>
 </div>
 """, unsafe_allow_html=True)
-
-# Crea la navigazione della barra laterale con stile migliorato
-st.sidebar.markdown("""
-<style>
-    /* Stili migliorati per la barra laterale */
-    .sidebar-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #4F6AF0;
-        margin-bottom: 1.25rem;
-        text-align: center;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid rgba(79, 106, 240, 0.2);
-    }
-
-    .sidebar-subtitle {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin-top: 1.25rem;
-        margin-bottom: 0.75rem;
-        color: #333;
-        background: linear-gradient(135deg, #F0F4FF, #E6EBFF);
-        padding: 0.5rem 0.75rem;
-        border-radius: 6px;
-    }
-
-    .sidebar-menu {
-        margin-bottom: 2rem;
-    }
-
-    /* Rendi più attraenti le opzioni di navigazione della barra laterale */
-    .sidebar .sidebar-content {
-        background-color: #F8FAFF;
-    }
-
-    /* Stile degli elementi della barra laterale */
-    section[data-testid="stSidebar"] .block-container {
-        padding-top: 2rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-    /* Aggiungi animazione alla barra laterale */
-    @keyframes sidebar-appear {
-        0% { opacity: 0; transform: translateX(-20px); }
-        100% { opacity: 1; transform: translateX(0); }
-    }
-
-    .sidebar-title, .sidebar-subtitle {
-        animation: sidebar-appear 0.5s ease forwards;
-    }
-</style>
-
-<div class="sidebar-title">🧭 Centro di Navigazione</div>
-<div class="sidebar-subtitle">📚 Funzioni Principali</div>
-""", unsafe_allow_html=True)
-
-
-
-# Opzioni di navigazione
-pages = {
-    "Home": "Home",
-    "Gestione Domande": "pages/gestione_domande.py",
-    "Gestione Set di Domande": "pages/gestione_set.py",
-    "Configurazione API": "pages/api_configurazione.py",
-    "Esecuzione Test": "pages/esecuzione_test.py",
-    "Visualizzazione Risultati": "pages/visualizza_risultati.py"
-}
-
-# Home è gestita in questo file, le altre sono in file separati
