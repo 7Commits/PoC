@@ -72,6 +72,7 @@ PoC/
 │   ├── openai_utils.py        # Utility per l'interazione con OpenAI
 │   ├── ui_utils.py            # Utility per l'interfaccia utente Streamlit
 │   └── db_utils.py            # Utility per le operazioni di database
+```
 
 ## Esecuzione con Docker
 
@@ -87,4 +88,3 @@ Nel file `docker-compose.yml` il servizio MySQL utilizza
 dell'applicazione. Assicurati che in `db.config` siano configurati
 `host=db` e `port=3306`.
 
-# PocReal
